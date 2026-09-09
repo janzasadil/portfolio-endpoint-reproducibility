@@ -3,6 +3,12 @@ study:
   estimation_window_months: 60
   return_unit: decimal
   missing_value_policy: reject
+  rebalancing_frequency: monthly
+  transaction_cost_per_half_turnover: 0.0025
+  ceq_risk_aversion: 5
+  evaluation_horizon_months: 120
+  endpoint_displacement_months: 12
+  tie_break_order: [equal_weight, sample_gmv, ledoit_wolf_gmv, inverse_volatility, erc]
 
 datasets:
   primary_17_industry:
