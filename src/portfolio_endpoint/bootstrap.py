@@ -7,7 +7,17 @@ import math
 import numpy as np
 import pandas as pd
 
-from .analysis import TIE_BREAK_ORDER, candidate_return_matrix, ceq, endpoint_reproducibility, endpoint_summary, ex_ante_selection
+from .analysis import (
+    TIE_BREAK_ORDER,
+    candidate_return_matrix,
+    ceq,
+    endpoint_reproducibility,
+    endpoint_summary,
+    ex_ante_selection,
+    kaplan_meier,
+    survival_summary,
+    winner_survival,
+)
 from .engine import run_headline_paths
 
 
@@ -124,6 +134,7 @@ def outer_bootstrap(
         endpoints = endpoint_reproducibility(paths, horizon, displacement, gamma, december_only=True)
         endpoint_stats = endpoint_summary(endpoints)
         selections = ex_ante_selection(paths, horizon, gamma, december_only=True)
+        survival = survival_summary(kaplan_meier(winner_survival(paths, horizon, gamma, december_only=True)))
         records.append({
             "replication": replication,
             "block_length": block_length,
@@ -131,6 +142,8 @@ def outer_bootstrap(
             "mean_selection_regret": float(selections["selection_regret"].mean()),
             "mean_selector_minus_ensemble": float(selections["selector_minus_ensemble"].mean()),
             "selector_hit_rate": float(selections["selector_hit"].mean()),
+            "mean_selector_rank": float(selections["selector_rank"].mean()),
+            **survival,
         })
     return pd.DataFrame.from_records(records)
 

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from portfolio_endpoint.analysis import ceq, endpoint_reproducibility, endpoint_summary, kaplan_meier
+from portfolio_endpoint.analysis import ceq, endpoint_reproducibility, endpoint_summary, kaplan_meier, survival_summary
 from portfolio_endpoint.engine import PathResult
 
 
@@ -36,3 +36,4 @@ def test_kaplan_meier_handles_censoring_without_iid_standard_errors():
     table = pd.DataFrame({"time_months": [1, 2, 2], "event": [True, False, True]})
     curve = kaplan_meier(table)
     assert curve.survival.tolist() == pytest.approx([2 / 3, 1 / 3])
+    assert survival_summary(curve)["survival_12_months"] == pytest.approx(1 / 3)

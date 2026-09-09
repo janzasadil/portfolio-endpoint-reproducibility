@@ -4,12 +4,23 @@ from __future__ import annotations
 
 import argparse
 import json
+import platform
+import subprocess
+import sys
 from pathlib import Path
 
 import pandas as pd
 import yaml
 
-from .analysis import endpoint_reproducibility, endpoint_summary, ex_ante_selection, kaplan_meier, winner_survival
+from .analysis import (
+    ceq_accounting,
+    endpoint_reproducibility,
+    endpoint_summary,
+    ex_ante_selection,
+    kaplan_meier,
+    survival_summary,
+    winner_survival,
+)
 from .bootstrap import outer_bootstrap, percentile_interval
 from .engine import run_headline_paths
 from .ingest import project_root
@@ -25,6 +36,23 @@ def _json_ready(values: dict) -> dict:
         else:
             converted[key] = float(value)
     return converted
+
+
+def _run_manifest(root: Path, dataset: str, study: dict, outer_reps: int) -> dict:
+    commit = subprocess.run(
+        ["git", "-c", f"safe.directory={root.as_posix()}", "-C", str(root), "rev-parse", "HEAD"],
+        capture_output=True, text=True, check=False,
+    ).stdout.strip()
+    import numpy, scipy, sklearn
+
+    return {
+        "dataset": dataset,
+        "git_commit": commit or "unavailable",
+        "python": sys.version,
+        "platform": platform.platform(),
+        "numpy": numpy.__version__, "pandas": pd.__version__, "scipy": scipy.__version__, "scikit_learn": sklearn.__version__,
+        "bootstrap_seed": study["bootstrap_seed"], "outer_bootstrap_replications": outer_reps,
+    }
 
 
 def main() -> None:
@@ -50,11 +78,14 @@ def main() -> None:
     endpoints.to_csv(output_dir / "endpoint_pairs.csv", index=False)
     kaplan_meier(survival).to_csv(output_dir / "winner_survival.csv", index=False)
     selections.to_csv(output_dir / "ex_ante_selection.csv", index=False)
+    ceq_accounting(paths, study["ceq_risk_aversion"]).to_csv(output_dir / "ceq_accounting.csv", index=False)
     summary = endpoint_summary(endpoints)
     summary.update({
         "mean_selection_regret": float(selections["selection_regret"].mean()),
         "mean_selector_minus_ensemble": float(selections["selector_minus_ensemble"].mean()),
         "selector_hit_rate": float(selections["selector_hit"].mean()),
+        "mean_selector_rank": float(selections["selector_rank"].mean()),
+        **survival_summary(kaplan_meier(survival)),
     })
 
     if args.outer_reps:
@@ -66,10 +97,19 @@ def main() -> None:
         )
         bootstrap.to_csv(output_dir / "outer_bootstrap.csv", index=False)
         summary["outer_bootstrap_replications"] = args.outer_reps
-        summary["endpoint_loss_95pct_interval"] = percentile_interval(bootstrap["mean_endpoint_loss"])
+        interval_columns = [
+            "mean_endpoint_loss", "literal_switch_frequency", "survival_12_months", "survival_24_months",
+            "mean_selection_regret", "mean_selector_minus_ensemble", "selector_hit_rate", "mean_selector_rank",
+        ]
+        intervals = {name: percentile_interval(bootstrap[name]) for name in interval_columns}
+        with (output_dir / "outer_bootstrap_intervals.json").open("w", encoding="utf-8") as handle:
+            json.dump({name: list(interval) for name, interval in intervals.items()}, handle, indent=2)
+        summary["endpoint_loss_95pct_interval"] = intervals["mean_endpoint_loss"]
 
     with (output_dir / "summary.json").open("w", encoding="utf-8") as handle:
         json.dump(_json_ready(summary), handle, indent=2)
+    with (output_dir / "run_manifest.json").open("w", encoding="utf-8") as handle:
+        json.dump(_run_manifest(root, args.dataset, study, args.outer_reps), handle, indent=2)
     print(json.dumps(_json_ready(summary), indent=2))
 
 

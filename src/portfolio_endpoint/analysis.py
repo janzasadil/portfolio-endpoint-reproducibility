@@ -142,6 +142,40 @@ def kaplan_meier(survival_table: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame.from_records(records)
 
 
+def survival_summary(curve: pd.DataFrame) -> dict[str, float]:
+    """Frozen S(12), S(24), and median-survival summaries from a KM curve."""
+    if curve.empty:
+        raise ValueError("Kaplan--Meier curve is empty")
+
+    def at_horizon(months: int) -> float:
+        observed = curve.loc[curve["time_months"] <= months, "survival"]
+        return float(observed.iloc[-1]) if not observed.empty else 1.0
+
+    crossed = curve.loc[curve["survival"] <= 0.5, "time_months"]
+    return {
+        "survival_12_months": at_horizon(12),
+        "survival_24_months": at_horizon(24),
+        "median_survival_months": float(crossed.iloc[0]) if not crossed.empty else float("nan"),
+    }
+
+
+def ceq_accounting(paths: Mapping[str, PathResult], gamma: float = 5.0) -> pd.DataFrame:
+    """Exact CEQ accounting components; descriptive rather than causal."""
+    rows = []
+    for name, path in paths.items():
+        gross = path.gross_returns
+        net = path.net_returns
+        rows.append({
+            "method": name,
+            "annualized_gross_mean": float(12 * gross.mean()),
+            "annualized_transaction_cost_drag": float(12 * (gross - net).mean()),
+            "annualized_net_variance_penalty": float((gamma / 2) * 12 * net.var(ddof=1)),
+            "net_ceq": ceq(net, gamma),
+            "annualized_gross_volatility": float(np.sqrt(12) * gross.std(ddof=1)),
+        })
+    return pd.DataFrame.from_records(rows)
+
+
 def ex_ante_selection(
     paths: Mapping[str, PathResult], horizon: int = 120, gamma: float = 5.0,
     december_only: bool = True,
@@ -170,6 +204,7 @@ def ex_ante_selection(
             "selection_regret": oracle_ceq - future[selected],
             "selector_minus_ensemble": future[selected] - ensemble_ceq,
             "selector_hit": selected == oracle,
+            "selector_rank": sorted(TIE_BREAK_ORDER, key=lambda name: (-future[name], TIE_BREAK_ORDER.index(name))).index(selected) + 1,
             **{f"past_ceq_{name}": past[name] for name in TIE_BREAK_ORDER},
             **{f"future_ceq_{name}": future[name] for name in TIE_BREAK_ORDER},
         })
