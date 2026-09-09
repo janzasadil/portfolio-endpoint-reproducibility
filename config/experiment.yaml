@@ -9,6 +9,9 @@ study:
   evaluation_horizon_months: 120
   endpoint_displacement_months: 12
   tie_break_order: [equal_weight, sample_gmv, ledoit_wolf_gmv, inverse_volatility, erc]
+  outer_bootstrap_replications: 5000
+  inner_bootstrap_replications: 2000
+  bootstrap_seed: 20260909
 
 datasets:
   primary_17_industry:

@@ -1,6 +1,15 @@
 import numpy as np
+import pytest
 
-from portfolio_endpoint.bootstrap import corrected_pw_stationary_block_length, protocol_block_length, stationary_indices
+import pandas as pd
+
+from portfolio_endpoint.bootstrap import (
+    corrected_pw_stationary_block_length,
+    percentile_interval,
+    protocol_block_length,
+    stationary_indices,
+    stationary_resample,
+)
 
 
 def test_stationary_indices_are_circular_and_reproducible():
@@ -16,3 +25,10 @@ def test_protocol_block_length_is_bounded_and_uses_both_dependence_proxies():
     block_length = protocol_block_length(returns)
     assert 2 <= block_length <= 12
     assert 2 <= corrected_pw_stationary_block_length(returns.mean(axis=1)) <= 12
+
+
+def test_resample_preserves_calendar_and_percentile_interval_is_two_sided():
+    frame = pd.DataFrame({"a": range(12), "b": range(12, 24)}, index=pd.date_range("2000-01-31", periods=12, freq="ME"))
+    sampled = stationary_resample(frame, 3, np.random.default_rng(1))
+    assert sampled.index.equals(frame.index)
+    assert percentile_interval(np.array([0, 1, 2, 3, 4]), level=0.8) == pytest.approx((0.4, 3.6))
