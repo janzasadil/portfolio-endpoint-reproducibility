@@ -16,3 +16,7 @@ This file is part of the research record. The ingestion command appends the exac
 5. Record checksums for both the archive and the processed panel below.
 
 The current protocol uses the French library's CIZ-based current return files. A future change requires a new manifest entry, rather than overwriting the recorded data.
+
+| primary_17_industry | `17_Industry_Portfolios_CSV.zip` → `ff_17_industry_value_weighted_monthly.csv` | 2026-09-09T13:47:24+00:00 | raw: `d99108d51938a44559a839df39a92ab531bd36bcd61bf7f6ddf8b89b7b8300c1`; processed: `33a3dc25c6ad938495ee553d674bfb963d0252581bd4a48fd2db7c9f00e244b3` | 1201 × 17 |
+
+| replication_30_industry | `30_Industry_Portfolios_CSV.zip` → `ff_30_industry_value_weighted_monthly.csv` | 2026-09-09T13:47:25+00:00 | raw: `965275065e93d289e416566d1b399fb63cef944a3de46a19a413d7adc869b600`; processed: `bef2e1d5bba9e3eba4766d08aa1f68792dd3f8335a0728bbd93a6c0fdc2148cd` | 1201 × 30 |

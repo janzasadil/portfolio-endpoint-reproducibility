@@ -81,7 +81,8 @@ def ingest_dataset(name: str, spec: dict[str, str], root: Path) -> None:
     raw_dir.mkdir(parents=True, exist_ok=True)
     processed_dir.mkdir(parents=True, exist_ok=True)
     archive, output = raw_dir / spec["raw_file"], processed_dir / spec["processed_file"]
-    urlretrieve(spec["url"], archive)
+    if not archive.exists():
+        urlretrieve(spec["url"], archive)
     panel = extract_zip_panel(archive)
     panel.to_csv(output, index=True, float_format="%.10f")
     append_manifest(root / "DATA_MANIFEST.md", name, archive, output, panel)

@@ -26,3 +26,8 @@ def test_rejects_french_missing_codes():
 """
     with pytest.raises(ValueError, match="missing"):
         parse_value_weighted_monthly(text)
+
+
+def test_rejects_a_missing_monthly_section():
+    with pytest.raises(ValueError, match="not found"):
+        parse_value_weighted_monthly("Some unrelated dataset\n")

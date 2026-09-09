@@ -23,7 +23,7 @@ portfolio-ingest
 pytest
 ```
 
-`portfolio-ingest` downloads the configured archives to `data/raw/`, writes decimal monthly return panels to `data/processed/`, and updates the manifest. Raw data and generated outputs are intentionally ignored by Git.
+`portfolio-ingest` downloads a configured archive only when it is absent from `data/raw/`, writes decimal monthly return panels to `data/processed/`, and updates the manifest. Existing raw archives are never overwritten. Raw data and generated outputs are intentionally ignored by Git.
 
 ## Layout
 
