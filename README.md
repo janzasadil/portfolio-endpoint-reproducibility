@@ -25,6 +25,15 @@ pytest
 
 `portfolio-ingest` downloads a configured archive only when it is absent from `data/raw/`, writes decimal monthly return panels to `data/processed/`, and updates the manifest. Existing raw archives are never overwritten. Raw data and generated outputs are intentionally ignored by Git.
 
+Run the minimum primary analysis with:
+
+```powershell
+$env:PYTHONPATH = 'src'
+python -m portfolio_endpoint.study
+```
+
+It writes endpoint, survival, selector, and summary outputs under `results/primary_17_industry/`. Add `--outer-reps 5000` only for the full (slow) protocol bootstrap.
+
 ## Layout
 
 - `config/` — fixed experimental choices and data locations.
