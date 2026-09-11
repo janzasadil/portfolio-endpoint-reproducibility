@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -117,6 +118,9 @@ def outer_bootstrap(
     horizon: int = 120,
     displacement: int = 12,
     gamma: float = 5.0,
+    start_replication: int = 0,
+    checkpoint_every: int | None = None,
+    checkpoint_callback: Callable[[pd.DataFrame], None] | None = None,
 ) -> pd.DataFrame:
     """Reconstruct the frozen primary statistics in stationary-bootstrap histories.
 
@@ -126,9 +130,11 @@ def outer_bootstrap(
     if replications < 1:
         raise ValueError("At least one bootstrap replication is required")
     block_length = protocol_block_length(returns.to_numpy())
-    rng = np.random.default_rng(seed)
     records: list[dict[str, float | int]] = []
-    for replication in range(replications):
+    for replication in range(start_replication, start_replication + replications):
+        # A replication-specific stream makes chunks reproducible and resumable:
+        # chunk boundaries cannot change any other replication's pseudo-history.
+        rng = np.random.default_rng(np.random.SeedSequence([seed, replication]))
         pseudo_returns = stationary_resample(returns, block_length, rng)
         paths = run_headline_paths(pseudo_returns, lookback, transaction_cost)
         endpoints = endpoint_reproducibility(paths, horizon, displacement, gamma, december_only=True)
@@ -145,6 +151,10 @@ def outer_bootstrap(
             "mean_selector_rank": float(selections["selector_rank"].mean()),
             **survival,
         })
+        if checkpoint_callback and checkpoint_every and len(records) % checkpoint_every == 0:
+            checkpoint_callback(pd.DataFrame.from_records(records))
+    if checkpoint_callback:
+        checkpoint_callback(pd.DataFrame.from_records(records))
     return pd.DataFrame.from_records(records)
 
 

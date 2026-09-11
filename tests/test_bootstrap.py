@@ -32,3 +32,9 @@ def test_resample_preserves_calendar_and_percentile_interval_is_two_sided():
     sampled = stationary_resample(frame, 3, np.random.default_rng(1))
     assert sampled.index.equals(frame.index)
     assert percentile_interval(np.array([0, 1, 2, 3, 4]), level=0.8) == pytest.approx((0.4, 3.6))
+
+
+def test_replication_seed_streams_are_stable_across_chunk_boundaries():
+    first_chunk = [stationary_indices(20, 3, np.random.default_rng(np.random.SeedSequence([99, i]))) for i in range(3)]
+    resumed = stationary_indices(20, 3, np.random.default_rng(np.random.SeedSequence([99, 2])))
+    assert np.array_equal(first_chunk[2], resumed)

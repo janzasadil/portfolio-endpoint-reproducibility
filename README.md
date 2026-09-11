@@ -32,7 +32,15 @@ $env:PYTHONPATH = 'src'
 python -m portfolio_endpoint.study
 ```
 
-It writes endpoint, survival, selector, and summary outputs under `results/primary_17_industry/`. Add `--outer-reps 5000` only for the full (slow) protocol bootstrap.
+It writes endpoint, survival, selector, and summary outputs under `results/primary_17_industry/`. For a resumable 2,000-rep outer bootstrap in two 1,000-rep chunks:
+
+```powershell
+python -m portfolio_endpoint.study --run-name primary_17_B2000 --outer-reps 1000
+# After the first chunk finishes:
+python -m portfolio_endpoint.study --run-name primary_17_B2000 --outer-reps 1000 --resume
+```
+
+Draws are checkpointed every 10 replications. Use `--outer-reps 5000` only for the full (slow) protocol bootstrap.
 
 ## Layout
 
