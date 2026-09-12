@@ -21,7 +21,7 @@ from .analysis import (
     survival_summary,
     winner_survival,
 )
-from .bootstrap import outer_bootstrap, percentile_interval
+from .bootstrap import outer_bootstrap, outer_sensitivity_bootstrap, percentile_interval
 from .engine import run_headline_paths
 from .ingest import project_root
 
@@ -62,6 +62,7 @@ def main() -> None:
     parser.add_argument("--resume", action="store_true", help="Append a bootstrap chunk to an existing run")
     parser.add_argument("--checkpoint-every", type=int, default=10, help="Persist bootstrap draws after this many replications")
     parser.add_argument("--run-name", help="Results subdirectory (default: dataset key)")
+    parser.add_argument("--enhanced-sensitivities", action="store_true", help="Emit paired h/H/gamma/cost sensitivity draws")
     args = parser.parse_args()
 
     root = project_root()
@@ -100,26 +101,25 @@ def main() -> None:
             combined = pd.concat([completed, new_draws], ignore_index=True)
             combined.to_csv(draw_path, index=False)
 
-        bootstrap = outer_bootstrap(
-            returns, replications=args.outer_reps, seed=study["bootstrap_seed"],
-            lookback=study["estimation_window_months"], transaction_cost=study["transaction_cost_per_half_turnover"],
-            horizon=study["evaluation_horizon_months"], displacement=study["endpoint_displacement_months"],
-            gamma=study["ceq_risk_aversion"],
-            start_replication=start_replication,
-            checkpoint_every=args.checkpoint_every,
-            checkpoint_callback=checkpoint,
-        )
+        common = dict(returns=returns, replications=args.outer_reps, seed=study["bootstrap_seed"],
+                      lookback=study["estimation_window_months"], transaction_cost=study["transaction_cost_per_half_turnover"],
+                      horizon=study["evaluation_horizon_months"], displacement=study["endpoint_displacement_months"],
+                      gamma=study["ceq_risk_aversion"], checkpoint_every=args.checkpoint_every,
+                      checkpoint_callback=checkpoint)
+        bootstrap = (outer_sensitivity_bootstrap(**common) if args.enhanced_sensitivities
+                     else outer_bootstrap(start_replication=start_replication, **common))
         bootstrap = pd.concat([completed, bootstrap], ignore_index=True)
         bootstrap.to_csv(draw_path, index=False)
         summary["outer_bootstrap_replications"] = int(len(bootstrap))
+        prefix = "baseline_" if args.enhanced_sensitivities else ""
         interval_columns = [
-            "mean_endpoint_loss", "literal_switch_frequency", "survival_12_months", "survival_24_months",
-            "mean_selection_regret", "mean_selector_minus_ensemble", "selector_hit_rate", "mean_selector_rank",
+            f"{prefix}mean_endpoint_loss", f"{prefix}literal_switch_frequency", f"{prefix}survival_12_months", f"{prefix}survival_24_months",
+            f"{prefix}mean_selection_regret", f"{prefix}mean_selector_minus_ensemble", f"{prefix}selector_hit_rate", f"{prefix}mean_selector_rank",
         ]
         intervals = {name: percentile_interval(bootstrap[name]) for name in interval_columns}
         with (output_dir / "outer_bootstrap_intervals.json").open("w", encoding="utf-8") as handle:
             json.dump({name: list(interval) for name, interval in intervals.items()}, handle, indent=2)
-        summary["endpoint_loss_95pct_interval"] = intervals["mean_endpoint_loss"]
+        summary["endpoint_loss_95pct_interval"] = intervals[f"{prefix}mean_endpoint_loss"]
 
     with (output_dir / "summary.json").open("w", encoding="utf-8") as handle:
         json.dump(_json_ready(summary), handle, indent=2)

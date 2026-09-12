@@ -19,7 +19,7 @@ from .analysis import (
     survival_summary,
     winner_survival,
 )
-from .engine import run_headline_paths
+from .engine import PathResult, run_headline_paths
 
 
 def corrected_pw_stationary_block_length(series: np.ndarray) -> int:
@@ -151,6 +151,81 @@ def outer_bootstrap(
             "mean_selector_rank": float(selections["selector_rank"].mean()),
             **survival,
         })
+        if checkpoint_callback and checkpoint_every and len(records) % checkpoint_every == 0:
+            checkpoint_callback(pd.DataFrame.from_records(records))
+    if checkpoint_callback:
+        checkpoint_callback(pd.DataFrame.from_records(records))
+    return pd.DataFrame.from_records(records)
+
+
+def _paths_at_cost(paths: dict[str, PathResult], transaction_cost: float) -> dict[str, PathResult]:
+    """Reprice fixed gross paths at a different proportional turnover cost."""
+    repriced = {}
+    for name, path in paths.items():
+        net = (1.0 - transaction_cost * path.turnover) * (1.0 + path.gross_returns) - 1.0
+        repriced[name] = PathResult(path.weights, path.gross_returns, net.rename("net_return"), path.turnover)
+    return repriced
+
+
+def _draw_metrics(paths: dict[str, PathResult], horizon: int, displacement: int, gamma: float) -> dict[str, float]:
+    endpoints = endpoint_reproducibility(paths, horizon, displacement, gamma, december_only=True)
+    selections = ex_ante_selection(paths, horizon, gamma, december_only=True)
+    survival = survival_summary(kaplan_meier(winner_survival(paths, horizon, gamma, december_only=True)))
+    return {
+        **endpoint_summary(endpoints),
+        "mean_selection_regret": float(selections["selection_regret"].mean()),
+        "mean_selector_minus_ensemble": float(selections["selector_minus_ensemble"].mean()),
+        "selector_hit_rate": float(selections["selector_hit"].mean()),
+        "mean_selector_rank": float(selections["selector_rank"].mean()),
+        **survival,
+    }
+
+
+def outer_sensitivity_bootstrap(
+    returns: pd.DataFrame,
+    *,
+    replications: int = 2000,
+    seed: int = 20260909,
+    lookback: int = 60,
+    transaction_cost: float = 0.0025,
+    horizon: int = 120,
+    displacement: int = 12,
+    gamma: float = 5.0,
+    checkpoint_every: int | None = None,
+    checkpoint_callback: Callable[[pd.DataFrame], None] | None = None,
+) -> pd.DataFrame:
+    """Paired one-at-a-time h, H, gamma, and cost sensitivity draws.
+
+    Every cell uses the identical pseudo-history within a replication. Lookback,
+    rebalancing, fixed-block, and universe sensitivities intentionally remain
+    outside this runner because they change portfolio construction or sampling.
+    """
+    block_length = protocol_block_length(returns.to_numpy())
+    records: list[dict[str, float | int]] = []
+    for replication in range(replications):
+        rng = np.random.default_rng(np.random.SeedSequence([seed, replication]))
+        pseudo_returns = stationary_resample(returns, block_length, rng)
+        baseline_paths = run_headline_paths(pseudo_returns, lookback, transaction_cost)
+        cells = {
+            "baseline": (baseline_paths, horizon, displacement, gamma),
+            "h6": (baseline_paths, horizon, 6, gamma),
+            "h24": (baseline_paths, horizon, 24, gamma),
+            "H5": (baseline_paths, 60, displacement, gamma),
+            "H15": (baseline_paths, 180, displacement, gamma),
+            "gamma2": (baseline_paths, horizon, displacement, 2.0),
+            "gamma10": (baseline_paths, horizon, displacement, 10.0),
+            "cost0": (_paths_at_cost(baseline_paths, 0.0), horizon, displacement, gamma),
+            "cost50": (_paths_at_cost(baseline_paths, 0.005), horizon, displacement, gamma),
+        }
+        metrics = {name: _draw_metrics(*arguments) for name, arguments in cells.items()}
+        record: dict[str, float | int] = {"replication": replication, "block_length": block_length}
+        for name, values in metrics.items():
+            record.update({f"{name}_{metric}": value for metric, value in values.items()})
+        for name, values in metrics.items():
+            if name != "baseline":
+                record.update({f"delta_{name}_{metric}": value - metrics["baseline"][metric]
+                               for metric, value in values.items()})
+        records.append(record)
         if checkpoint_callback and checkpoint_every and len(records) % checkpoint_every == 0:
             checkpoint_callback(pd.DataFrame.from_records(records))
     if checkpoint_callback:
