@@ -191,6 +191,7 @@ def outer_sensitivity_bootstrap(
     horizon: int = 120,
     displacement: int = 12,
     gamma: float = 5.0,
+    start_replication: int = 0,
     checkpoint_every: int | None = None,
     checkpoint_callback: Callable[[pd.DataFrame], None] | None = None,
 ) -> pd.DataFrame:
@@ -202,7 +203,7 @@ def outer_sensitivity_bootstrap(
     """
     block_length = protocol_block_length(returns.to_numpy())
     records: list[dict[str, float | int]] = []
-    for replication in range(replications):
+    for replication in range(start_replication, start_replication + replications):
         rng = np.random.default_rng(np.random.SeedSequence([seed, replication]))
         pseudo_returns = stationary_resample(returns, block_length, rng)
         baseline_paths = run_headline_paths(pseudo_returns, lookback, transaction_cost)

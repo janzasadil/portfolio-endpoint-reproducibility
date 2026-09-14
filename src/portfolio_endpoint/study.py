@@ -106,7 +106,7 @@ def main() -> None:
                       horizon=study["evaluation_horizon_months"], displacement=study["endpoint_displacement_months"],
                       gamma=study["ceq_risk_aversion"], checkpoint_every=args.checkpoint_every,
                       checkpoint_callback=checkpoint)
-        bootstrap = (outer_sensitivity_bootstrap(**common) if args.enhanced_sensitivities
+        bootstrap = (outer_sensitivity_bootstrap(start_replication=start_replication, **common) if args.enhanced_sensitivities
                      else outer_bootstrap(start_replication=start_replication, **common))
         bootstrap = pd.concat([completed, bootstrap], ignore_index=True)
         bootstrap.to_csv(draw_path, index=False)
