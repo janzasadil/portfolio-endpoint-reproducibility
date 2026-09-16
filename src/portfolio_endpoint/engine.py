@@ -29,10 +29,10 @@ def _drift(weights: np.ndarray, asset_returns: np.ndarray, gross_return: float) 
 
 
 def run_continuous_path(
-    returns: pd.DataFrame, target_rule, lookback: int, transaction_cost: float
+    returns: pd.DataFrame, target_rule, lookback: int, transaction_cost: float, rebalance_every: int = 1
 ) -> PathResult:
     """Run a target rule once, without endpoint-specific holding resets."""
-    if lookback < 2 or len(returns) <= lookback:
+    if lookback < 2 or len(returns) <= lookback or rebalance_every < 1:
         raise ValueError("Return matrix is too short for the requested lookback")
     if returns.isna().any().any() or not np.isfinite(returns.to_numpy()).all():
         raise ValueError("Return matrix contains missing or nonfinite values")
@@ -47,10 +47,16 @@ def run_continuous_path(
 
     # At t=lookback-1, history ends at t and target is held over index lookback.
     for target_index in range(lookback - 1, len(returns) - 1):
-        target = np.asarray(target_rule(values[target_index - lookback + 1 : target_index + 1]), dtype=float)
+        scheduled = (target_index - (lookback - 1)) % rebalance_every == 0
+        if scheduled:
+            target = np.asarray(target_rule(values[target_index - lookback + 1 : target_index + 1]), dtype=float)
+        elif previous_drifted is not None:
+            target = previous_drifted
+        else:  # Defensive: the first OOS month is always scheduled.
+            raise ValueError("An initial portfolio formation must be scheduled")
         held_returns = values[target_index + 1]
         gross = float(target @ held_returns)
-        turnover = 0.0 if previous_drifted is None else 0.5 * float(np.abs(target - previous_drifted).sum())
+        turnover = 0.0 if previous_drifted is None or not scheduled else 0.5 * float(np.abs(target - previous_drifted).sum())
         net = (1.0 - transaction_cost * turnover) * (1.0 + gross) - 1.0
         targets.append(target)
         gross_returns.append(gross)
@@ -66,14 +72,16 @@ def run_continuous_path(
     )
 
 
-def run_headline_paths(returns: pd.DataFrame, lookback: int = 60, transaction_cost: float = 0.0025) -> dict[str, PathResult]:
+def run_headline_paths(
+    returns: pd.DataFrame, lookback: int = 60, transaction_cost: float = 0.0025, rebalance_every: int = 1
+) -> dict[str, PathResult]:
     paths = {
-        name: run_continuous_path(returns, rule, lookback, transaction_cost)
+        name: run_continuous_path(returns, rule, lookback, transaction_cost, rebalance_every)
         for name, rule in HEADLINE_METHODS.items()
     }
 
     def ensemble_target(history: np.ndarray) -> np.ndarray:
         return np.mean([rule(history) for rule in HEADLINE_METHODS.values()], axis=0)
 
-    paths["ensemble"] = run_continuous_path(returns, ensemble_target, lookback, transaction_cost)
+    paths["ensemble"] = run_continuous_path(returns, ensemble_target, lookback, transaction_cost, rebalance_every)
     return paths

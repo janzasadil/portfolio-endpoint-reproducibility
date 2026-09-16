@@ -9,6 +9,7 @@ from portfolio_endpoint.bootstrap import (
     protocol_block_length,
     stationary_indices,
     stationary_resample,
+    circular_block_indices,
 )
 
 
@@ -38,3 +39,9 @@ def test_replication_seed_streams_are_stable_across_chunk_boundaries():
     first_chunk = [stationary_indices(20, 3, np.random.default_rng(np.random.SeedSequence([99, i]))) for i in range(3)]
     resumed = stationary_indices(20, 3, np.random.default_rng(np.random.SeedSequence([99, 2])))
     assert np.array_equal(first_chunk[2], resumed)
+
+
+def test_circular_block_indices_have_fixed_contiguous_blocks():
+    indices = circular_block_indices(10, 3, np.random.default_rng(2))
+    assert len(indices) == 10
+    assert ((indices >= 0) & (indices < 10)).all()

@@ -22,3 +22,10 @@ def test_path_starts_after_lookback_and_has_one_weight_vector_per_held_month():
     path = run_continuous_path(returns, lambda history: np.array([0.5, 0.5]), 2, 0.0)
     assert len(path.net_returns) == 3
     assert path.weights.index.equals(path.net_returns.index)
+
+
+def test_quarterly_rebalance_does_not_trade_between_scheduled_dates():
+    returns = pd.DataFrame(np.full((8, 2), [0.02, 0.0]), index=pd.date_range("2000-01-31", periods=8, freq="ME"))
+    path = run_continuous_path(returns, lambda history: np.array([0.5, 0.5]), 2, 0.01, rebalance_every=3)
+    assert path.turnover.iloc[1] == 0.0
+    assert path.turnover.iloc[2] == 0.0

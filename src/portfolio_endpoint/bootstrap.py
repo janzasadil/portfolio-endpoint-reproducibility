@@ -98,11 +98,22 @@ def stationary_indices(nobs: int, expected_block_length: int, rng: np.random.Gen
     return indices
 
 
-def stationary_resample(returns: pd.DataFrame, expected_block_length: int, rng: np.random.Generator) -> pd.DataFrame:
+def circular_block_indices(nobs: int, block_length: int, rng: np.random.Generator) -> np.ndarray:
+    """Generate fixed-length circular-block bootstrap indices."""
+    if nobs < 1 or block_length < 1:
+        raise ValueError("nobs and block length must be positive")
+    starts = rng.integers(nobs, size=math.ceil(nobs / block_length))
+    return np.concatenate([(start + np.arange(block_length)) % nobs for start in starts])[:nobs]
+
+
+def stationary_resample(
+    returns: pd.DataFrame, expected_block_length: int, rng: np.random.Generator, fixed_block: bool = False
+) -> pd.DataFrame:
     """Resample whole monthly asset-return vectors while retaining calendar labels."""
     if returns.empty or returns.isna().any().any():
         raise ValueError("Bootstrap input must be a complete return matrix")
-    indices = stationary_indices(len(returns), expected_block_length, rng)
+    indices = (circular_block_indices(len(returns), expected_block_length, rng)
+               if fixed_block else stationary_indices(len(returns), expected_block_length, rng))
     # Preserve the original dates: only return vectors, not the calendar needed
     # to identify December inferential origins, are resampled.
     return pd.DataFrame(returns.to_numpy()[indices], index=returns.index, columns=returns.columns)
@@ -121,6 +132,7 @@ def outer_bootstrap(
     start_replication: int = 0,
     checkpoint_every: int | None = None,
     checkpoint_callback: Callable[[pd.DataFrame], None] | None = None,
+    fixed_block_length: int | None = None,
 ) -> pd.DataFrame:
     """Reconstruct the frozen primary statistics in stationary-bootstrap histories.
 
@@ -129,13 +141,13 @@ def outer_bootstrap(
     """
     if replications < 1:
         raise ValueError("At least one bootstrap replication is required")
-    block_length = protocol_block_length(returns.to_numpy())
+    block_length = fixed_block_length or protocol_block_length(returns.to_numpy())
     records: list[dict[str, float | int]] = []
     for replication in range(start_replication, start_replication + replications):
         # A replication-specific stream makes chunks reproducible and resumable:
         # chunk boundaries cannot change any other replication's pseudo-history.
         rng = np.random.default_rng(np.random.SeedSequence([seed, replication]))
-        pseudo_returns = stationary_resample(returns, block_length, rng)
+        pseudo_returns = stationary_resample(returns, block_length, rng, fixed_block=fixed_block_length is not None)
         paths = run_headline_paths(pseudo_returns, lookback, transaction_cost)
         endpoints = endpoint_reproducibility(paths, horizon, displacement, gamma, december_only=True)
         endpoint_stats = endpoint_summary(endpoints)

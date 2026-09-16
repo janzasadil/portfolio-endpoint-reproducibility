@@ -63,14 +63,18 @@ def main() -> None:
     parser.add_argument("--checkpoint-every", type=int, default=10, help="Persist bootstrap draws after this many replications")
     parser.add_argument("--run-name", help="Results subdirectory (default: dataset key)")
     parser.add_argument("--enhanced-sensitivities", action="store_true", help="Emit paired h/H/gamma/cost sensitivity draws")
+    parser.add_argument("--lookback", type=int, help="Override the 60-month lookback for a sensitivity run")
+    parser.add_argument("--rebalance-every", type=int, default=1, help="Months between rebalances (3 = quarterly)")
+    parser.add_argument("--fixed-block-length", type=int, help="Use fixed circular blocks for an outer-bootstrap sensitivity")
     args = parser.parse_args()
 
     root = project_root()
     with (root / "config" / "experiment.yaml").open(encoding="utf-8") as handle:
         config = yaml.safe_load(handle)
     study, dataset = config["study"], config["datasets"][args.dataset]
+    lookback = args.lookback or study["estimation_window_months"]
     returns = pd.read_csv(root / "data" / "processed" / dataset["processed_file"], index_col="date", parse_dates=True)
-    paths = run_headline_paths(returns, study["estimation_window_months"], study["transaction_cost_per_half_turnover"])
+    paths = run_headline_paths(returns, lookback, study["transaction_cost_per_half_turnover"], args.rebalance_every)
     endpoints = endpoint_reproducibility(
         paths, study["evaluation_horizon_months"], study["endpoint_displacement_months"], study["ceq_risk_aversion"]
     )
@@ -102,12 +106,12 @@ def main() -> None:
             combined.to_csv(draw_path, index=False)
 
         common = dict(returns=returns, replications=args.outer_reps, seed=study["bootstrap_seed"],
-                      lookback=study["estimation_window_months"], transaction_cost=study["transaction_cost_per_half_turnover"],
+                      lookback=lookback, transaction_cost=study["transaction_cost_per_half_turnover"],
                       horizon=study["evaluation_horizon_months"], displacement=study["endpoint_displacement_months"],
                       gamma=study["ceq_risk_aversion"], checkpoint_every=args.checkpoint_every,
                       checkpoint_callback=checkpoint)
         bootstrap = (outer_sensitivity_bootstrap(start_replication=start_replication, **common) if args.enhanced_sensitivities
-                     else outer_bootstrap(start_replication=start_replication, **common))
+                     else outer_bootstrap(start_replication=start_replication, fixed_block_length=args.fixed_block_length, **common))
         bootstrap = pd.concat([completed, bootstrap], ignore_index=True)
         bootstrap.to_csv(draw_path, index=False)
         summary["outer_bootstrap_replications"] = int(len(bootstrap))
