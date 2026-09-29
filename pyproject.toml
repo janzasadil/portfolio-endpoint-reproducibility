@@ -13,6 +13,7 @@ dependencies = [
   "PyYAML>=6.0",
   "scikit-learn>=1.4",
   "scipy>=1.11",
+  "matplotlib>=3.8",
 ]
 
 [project.optional-dependencies]
@@ -21,6 +22,7 @@ dev = ["pytest>=8.0", "ruff>=0.6"]
 [project.scripts]
 portfolio-ingest = "portfolio_endpoint.ingest:main"
 portfolio-study = "portfolio_endpoint.study:main"
+portfolio-diagnostics = "portfolio_endpoint.diagnostics:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
