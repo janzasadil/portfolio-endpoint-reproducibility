@@ -42,6 +42,21 @@ python -m portfolio_endpoint.study --run-name primary_17_B2000 --outer-reps 1000
 
 Draws are checkpointed every 10 replications. Use `--outer-reps 5000` only for the full (slow) protocol bootstrap.
 
+## Final reporting bundle
+
+After completed empirical and diagnostic runs are present locally, regenerate the
+publication bundle without rebuilding portfolio paths or launching a bootstrap:
+
+```powershell
+$env:PYTHONPATH = 'src'
+python -m portfolio_endpoint.reporting
+```
+
+This writes validation checks, publication tables and figures, supplementary
+tables, `FINAL_VALIDATION_REPORT.md`, `FINAL_RESULTS_SUMMARY.json`, and a
+Results-section draft to `results/publication/`. The command validates saved
+outputs only; it does not replace anything under the original run directories.
+
 ## Layout
 
 - `config/` — fixed experimental choices and data locations.
