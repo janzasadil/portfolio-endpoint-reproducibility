@@ -207,9 +207,6 @@ def _write_tex(table: pd.DataFrame, output: Path, stem: str, caption: str, label
     text = "\\begin{table}[H]\n\\centering\n\\small\n\\caption{" + caption + "}\n\\label{" + label + "}\n" + body
     text += "\\begin{flushleft}\\footnotesize " + note + "\\end{flushleft}\n\\end{table}\n"
     (output / f"{stem}.tex").write_text(text, encoding="utf-8")
-    # A tabular-only variant is deliberately provided for authors who need a
-    # custom table wrapper.  It must not be mixed with the complete table file.
-    (output / f"{stem}_body.tex").write_text(body, encoding="utf-8")
 
 
 def _write_figure_shells(output: Path) -> None:
@@ -247,20 +244,6 @@ caption, label, tabular, and note. Include it directly, with no outer
 
 ```latex
 \\input{tables/table_1_endpoint_reproducibility.tex}
-```
-
-## Custom table layouts
-
-Use the matching `*_body.tex` file only if you need to supply your own wrapper:
-
-```latex
-\\begin{table}[H]
-  \\centering
-  \\small
-  \\caption{Endpoint reproducibility}
-  \\label{tab:endpoint}
-  \\input{tables/table_1_endpoint_reproducibility_body.tex}
-\\end{table}
 ```
 
 Never input the complete `.tex` table inside `\\resizebox`, `\\scalebox`, a
