@@ -41,9 +41,7 @@ def _display_bp(value: float) -> str:
 
 
 def _display_pct(value: float) -> str:
-    # ``escape=False`` is intentional for readable headers; percentages must
-    # therefore be escaped explicitly for valid LaTex source.
-    return f"{100 * value:.1f}\\%"
+    return f"{100 * value:.1f}%"
 
 
 def _validate_run(root: Path, label: str, run_name: str, prefix: str) -> tuple[dict, list[dict]]:
@@ -196,7 +194,15 @@ def _write_tex(table: pd.DataFrame, output: Path, stem: str, caption: str, label
     def format_number(value: float) -> str:
         return f"{value:.0f}" if float(value).is_integer() else f"{value:.2f}"
 
-    body = table.to_latex(index=False, escape=False, float_format=format_number,
+    # Values and headings must never contain raw percent signs, which would
+    # comment out the rest of a tabular row when ``escape=False`` is used.
+    latex_table = table.rename(columns=lambda name: str(name).replace("%", r"\%"))
+    for column in latex_table.columns:
+        if latex_table[column].dtype == object:
+            latex_table[column] = latex_table[column].map(
+                lambda value: value.replace("%", r"\%") if isinstance(value, str) else value
+            )
+    body = latex_table.to_latex(index=False, escape=False, float_format=format_number,
                           column_format="l" + "r" * (len(table.columns) - 1))
     text = "\\begin{table}[H]\n\\centering\n\\small\n\\caption{" + caption + "}\n\\label{" + label + "}\n" + body
     text += "\\begin{flushleft}\\footnotesize " + note + "\\end{flushleft}\n\\end{table}\n"
@@ -330,7 +336,7 @@ def _latex_tables(root: Path, diagnostics: Path, output: Path, tables: dict) -> 
     a7 = pd.DataFrame([["Equal weight", "None", "Equal weights", "Long-only, fully invested"], ["Sample GMV", "Sample covariance", "Minimum variance", "Long-only, fully invested"], ["Ledoit--Wolf GMV", "Ledoit--Wolf shrinkage", "Minimum variance", "Long-only, fully invested"], ["Inverse volatility", "Sample volatility", "Weights proportional to inverse volatility", "Long-only, fully invested"], ["ERC", "Sample covariance", "Equal risk contributions", "Long-only, fully invested"]], columns=["Method", "Risk input", "Objective/rule", "Constraints"])
     a7["Lookback"] = "60 months"
     a7["Rebalance"] = "Monthly"
-    _write_tex(a7, output, "table_A7_method_definitions", "Portfolio-method definitions", "tab:methods", "Frozen headline definitions. The separately traded ensemble averages the five target-weight rules.")
+    _write_tex(a7, output, "table_A7_portfolio_method_definitions", "Portfolio-method definitions", "tab:methods", "Frozen headline definitions. The separately traded ensemble averages the five target-weight rules.")
     a8_rows = []
     for label, (run, _) in RUNS.items():
         dataset = "ff_17_industry_value_weighted_monthly.csv" if label.startswith("17") else "ff_30_industry_value_weighted_monthly.csv"
@@ -338,7 +344,7 @@ def _latex_tables(root: Path, diagnostics: Path, output: Path, tables: dict) -> 
         endpoint = pd.read_csv(root / "results" / run / "endpoint_pairs.csv")
         decisions = pd.read_csv(root / "results" / run / "ex_ante_selection.csv")
         a8_rows.append({"Universe": label, "Assets": returns.shape[1], "Source": "Kenneth R. French Data Library", "Sample": f"{returns.index.min():%Y-%m}--{returns.index.max():%Y-%m}", "OOS start": f"{returns.index[60]:%Y-%m}", "Monthly observations": len(returns), "Endpoint pairs": len(endpoint), "Ex-ante decisions": len(decisions)})
-    _write_tex(pd.DataFrame(a8_rows), output, "table_A8_data_sample", "Data and sample construction", "tab:data", "Monthly value-weighted Fama--French industry portfolios; OOS start follows the 60-month frozen estimation window.")
+    _write_tex(pd.DataFrame(a8_rows), output, "table_A8_data_sample_construction", "Data and sample construction", "tab:data", "Monthly value-weighted Fama--French industry portfolios; OOS start follows the 60-month frozen estimation window.")
 
 
 def _supplements(root: Path, diagnostics: Path, output: Path) -> None:
