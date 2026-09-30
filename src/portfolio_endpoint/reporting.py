@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 from pathlib import Path
 
 import matplotlib
@@ -160,10 +159,117 @@ def _publication_tables(run_data: dict[str, dict], diagnostics: Path, output: Pa
 
 
 def _figures(diagnostics: Path, output: Path) -> None:
-    # Source figures are generated deterministically by the diagnostics command;
-    # copy them into the separate publication bundle rather than altering them.
-    shutil.copy2(diagnostics / "literal_vs_material_survival_curves.png", output / "figure_1_winner_durability.png")
-    shutil.copy2(diagnostics / "endpoint_displacement_profiles.png", output / "figure_2_endpoint_displacement_profiles.png")
+    """Rebuild publication figures as vector PDFs from saved diagnostic curves."""
+    fig, ax = plt.subplots(figsize=(6.4, 3.7), constrained_layout=True)
+    curves = (("17 industries: literal", "survival_curve_literal_17_baseline.csv"),
+              ("17 industries: material >25 bp", "survival_curve_material_25bp_17_baseline.csv"),
+              ("30 industries: literal", "survival_curve_literal_30_baseline.csv"),
+              ("30 industries: material >25 bp", "survival_curve_material_25bp_30_baseline.csv"))
+    for label, filename in curves:
+        curve = pd.read_csv(diagnostics / filename)
+        ax.step(np.r_[0, curve.time_months], np.r_[1.0, curve.survival], where="post", label=label)
+    ax.set(xlabel="Months since December origin", ylabel="First-failure survival", ylim=(0, 1.03))
+    ax.legend(frameon=False, fontsize=8, ncol=2)
+    fig.savefig(output / "figure_1_winner_durability.pdf")
+    fig.savefig(output / "figure_1_winner_durability.png", dpi=220)
+    plt.close(fig)
+
+    table = pd.read_csv(diagnostics / "endpoint_displacement_profiles.csv")
+    table = table.loc[table["sample"] == "full_eligible"]
+    fig, axes = plt.subplots(1, 2, figsize=(8, 3.4), constrained_layout=True)
+    for universe, subset in table.groupby("universe"):
+        subset = subset.sort_values("displacement_months")
+        axes[0].plot(subset.displacement_months, 10_000 * subset.mean_endpoint_loss, marker="o", label=f"{universe} industries")
+        axes[1].plot(subset.displacement_months, 100 * subset.literal_switch_frequency, marker="o", label=f"{universe} industries")
+    axes[0].set(xlabel="Endpoint displacement (months)", ylabel="Mean endpoint loss (bp)")
+    axes[1].set(xlabel="Endpoint displacement (months)", ylabel="Literal switching (%)")
+    axes[0].legend(frameon=False)
+    fig.savefig(output / "figure_2_endpoint_displacement_profiles.pdf")
+    fig.savefig(output / "figure_2_endpoint_displacement_profiles.png", dpi=220)
+    plt.close(fig)
+
+
+def _write_tex(table: pd.DataFrame, output: Path, stem: str, caption: str, label: str, note: str) -> None:
+    """Write a compact, directly pasteable LaTex table shell from audited values."""
+    def format_number(value: float) -> str:
+        return f"{value:.0f}" if float(value).is_integer() else f"{value:.2f}"
+
+    body = table.to_latex(index=False, escape=False, float_format=format_number,
+                          column_format="l" + "r" * (len(table.columns) - 1))
+    text = "\\begin{table}[!htbp]\n\\centering\n\\caption{" + caption + "}\n\\label{" + label + "}\n" + body
+    text += "\\begin{flushleft}\\footnotesize " + note + "\\end{flushleft}\n\\end{table}\n"
+    (output / f"{stem}.tex").write_text(text, encoding="utf-8")
+
+
+def _latex_tables(root: Path, diagnostics: Path, output: Path, tables: dict) -> None:
+    """Create main-text and A1--A8 pasteable LaTex tables from saved outputs."""
+    _write_tex(pd.DataFrame(tables["table1"]), output, "table_1_endpoint_reproducibility", "Endpoint reproducibility", "tab:endpoint", "Endpoint loss is the later-window CEQ shortfall of the earlier winner; CIs are saved percentile bootstrap intervals.")
+    _write_tex(pd.DataFrame(tables["table2"]), output, "table_2_ex_ante_recoverability", "Ex-ante recoverability", "tab:recoverability", "The future candidate-set oracle is retrospective. Selector-minus-ensemble is reported on continuous implementable paths.")
+    survival = tables["survival"].copy()
+    a1 = pd.DataFrame({"Universe": survival.universe.astype(str) + " industries",
+                       "Literal S(12)": survival.survival_12_complete_followup.map(_display_pct),
+                       "Literal S(24)": survival.survival_24_complete_followup.map(_display_pct),
+                       "Median literal (months)": survival.median_survival_months_full_km,
+                       "Eligible origins": survival.n_origins_full_km})
+    material = survival.loc[survival.definition == "material_25bp"].reset_index(drop=True)
+    literal = a1.loc[survival.definition == "literal"].reset_index(drop=True)
+    a1 = literal.merge(pd.DataFrame({"Universe": material.universe.astype(str) + " industries",
+                                     "Material S(12)": material.survival_12_complete_followup.map(_display_pct),
+                                     "Material S(24)": material.survival_24_complete_followup.map(_display_pct),
+                                     "Median material (months)": material.median_survival_months_full_km}), on="Universe")
+    _write_tex(a1, output, "table_A1_winner_durability", "Winner durability", "tab:durability", "Material failure is the first CEQ gap strictly greater than 25 bp; S(12) and S(24) use complete-follow-up origins.")
+    validation = pd.read_csv(diagnostics / "survival_validation_summary.csv")
+    a2 = validation.loc[validation["sample"] == "common_calendar_origins", ["specification", "n_origins_full_km", "median_survival_months_full_km", "survival_12_complete_followup", "survival_24_complete_followup", "winner_differs_exactly_12_complete", "first_failure_within_12_complete", "regained_by_12_complete"]].copy()
+    a2.columns = ["Specification", "Common n", "Median months", "S(12)", "S(24)", "Differs at 12", "First switch by 12", "Switched and regained"]
+    for col in ["S(12)", "S(24)", "Differs at 12", "First switch by 12", "Switched and regained"]:
+        a2[col] = a2[col].map(_display_pct)
+    _write_tex(a2, output, "table_A2_survival_validation", "Survival validation and temporary switching", "tab:survival-validation", "Matched December origins only. First switching is not reversed by later recovery.")
+    a3 = tables["displacement"].copy()
+    a3["mean_endpoint_loss"] = a3.mean_endpoint_loss.map(_display_bp)
+    for col in ["median_endpoint_loss", "p75_endpoint_loss", "p90_endpoint_loss"]:
+        a3[col] = a3[col].map(_display_bp)
+    for col in ["literal_switch_frequency", "loss_exceeds_25bp_frequency"]:
+        a3[col] = a3[col].map(_display_pct)
+    a3 = a3.rename(columns={"universe": "Universe", "sample": "Sample", "displacement_months": "h", "mean_endpoint_loss": "Mean loss (bp)", "median_endpoint_loss": "Median (bp)", "p75_endpoint_loss": "P75 (bp)", "p90_endpoint_loss": "P90 (bp)", "literal_switch_frequency": "Switching", "loss_exceeds_25bp_frequency": "Loss >25 bp", "n_origins": "n"})
+    _write_tex(a3, output, "table_A3_endpoint_displacement", "Endpoint-displacement profile", "tab:displacement", "Full and matched-calendar-origin samples are shown separately; no functional form is fitted.")
+    a4 = pd.read_csv(diagnostics / "selector_vs_fixed_methods.csv")
+    for col in ["mean_fixed_future_ceq", "mean_selector_minus_fixed"]:
+        a4[col] = a4[col].map(_display_bp)
+    for col in ["selector_better_fraction", "future_candidate_winner_frequency"]:
+        a4[col] = a4[col].map(_display_pct)
+    a4 = a4[["universe", "fixed_method", "n_decision_windows", "mean_fixed_future_ceq", "mean_selector_minus_fixed", "selector_better_fraction", "future_candidate_winner_frequency"]]
+    a4.columns = ["Universe", "Fixed method", "Decision windows", "Future CEQ (bp)", "Selector minus method (bp)", "Selector better", "Future winner frequency"]
+    _write_tex(a4, output, "table_A4_selector_fixed_methods", "Selector versus fixed methods", "tab:selector-fixed", "Descriptive paired comparisons only; no fixed method is retrospectively designated as an ex-ante rule.")
+    sensitivity = pd.read_csv(output / "supplement_completed_specification_sensitivities.csv")
+    sensitivity.insert(1, "L", [36, 120, 60])
+    sensitivity.insert(2, "Rebalance", ["monthly", "monthly", "quarterly"])
+    sensitivity.insert(3, "Cost (bp)", 25)
+    sensitivity.insert(4, "gamma", 5)
+    sensitivity.insert(5, "H", 120)
+    sensitivity.insert(6, "h", 12)
+    sensitivity["mean_endpoint_loss"] = sensitivity.mean_endpoint_loss.map(_display_bp)
+    sensitivity["literal_switch_frequency"] = sensitivity.literal_switch_frequency.map(_display_pct)
+    sensitivity["mean_selection_regret"] = sensitivity.mean_selection_regret.map(_display_bp)
+    a5 = sensitivity[["specification", "L", "Rebalance", "Cost (bp)", "gamma", "H", "h", "mean_endpoint_loss", "literal_switch_frequency", "survival_12_months", "survival_24_months", "median_survival_months", "mean_selection_regret"]].rename(columns={"specification": "Specification", "mean_endpoint_loss": "Mean loss (bp)", "literal_switch_frequency": "Switching", "survival_12_months": "S(12)", "survival_24_months": "S(24)", "median_survival_months": "Median", "mean_selection_regret": "Selection regret (bp)"})
+    for col in ["S(12)", "S(24)"]:
+        a5[col] = a5[col].map(_display_pct)
+    _write_tex(a5, output, "table_A5_specification_robustness", "Completed specification robustness", "tab:robustness", "Only separately completed deterministic specifications are shown. Cost and gamma variations are available as paired bootstrap draws, not as standalone saved point-estimate runs.")
+    a6 = pd.read_csv(output / "supplement_bootstrap_intervals.csv")
+    a6["endpoint_loss_ci_low_bp"] = a6.endpoint_loss_ci_low_bp.map(lambda x: f"{x:.2f}")
+    a6["endpoint_loss_ci_high_bp"] = a6.endpoint_loss_ci_high_bp.map(lambda x: f"{x:.2f}")
+    _write_tex(a6, output, "table_A6_bootstrap_robustness", "Bootstrap robustness", "tab:bootstrap", "Endpoint-loss percentile intervals from completed runs; fixed-block rows are sensitivity analyses.")
+    a7 = pd.DataFrame([["Equal weight", "None", "Equal weights", "Long-only, fully invested"], ["Sample GMV", "Sample covariance", "Minimum variance", "Long-only, fully invested"], ["Ledoit--Wolf GMV", "Ledoit--Wolf shrinkage", "Minimum variance", "Long-only, fully invested"], ["Inverse volatility", "Sample volatility", "Weights proportional to inverse volatility", "Long-only, fully invested"], ["ERC", "Sample covariance", "Equal risk contributions", "Long-only, fully invested"]], columns=["Method", "Risk input", "Objective/rule", "Constraints"])
+    a7["Lookback"] = "60 months"
+    a7["Rebalance"] = "Monthly"
+    _write_tex(a7, output, "table_A7_method_definitions", "Portfolio-method definitions", "tab:methods", "Frozen headline definitions. The separately traded ensemble averages the five target-weight rules.")
+    a8_rows = []
+    for label, (run, _) in RUNS.items():
+        dataset = "ff_17_industry_value_weighted_monthly.csv" if label.startswith("17") else "ff_30_industry_value_weighted_monthly.csv"
+        returns = pd.read_csv(root / "data" / "processed" / dataset, index_col="date", parse_dates=True)
+        endpoint = pd.read_csv(root / "results" / run / "endpoint_pairs.csv")
+        decisions = pd.read_csv(root / "results" / run / "ex_ante_selection.csv")
+        a8_rows.append({"Universe": label, "Assets": returns.shape[1], "Source": "Kenneth R. French Data Library", "Sample": f"{returns.index.min():%Y-%m}--{returns.index.max():%Y-%m}", "OOS start": f"{returns.index[60]:%Y-%m}", "Monthly observations": len(returns), "Endpoint pairs": len(endpoint), "Ex-ante decisions": len(decisions)})
+    _write_tex(pd.DataFrame(a8_rows), output, "table_A8_data_sample", "Data and sample construction", "tab:data", "Monthly value-weighted Fama--French industry portfolios; OOS start follows the 60-month frozen estimation window.")
 
 
 def _supplements(root: Path, diagnostics: Path, output: Path) -> None:
@@ -217,6 +323,7 @@ def run_reporting(output_dir: Path | None = None) -> Path:
     tables = _publication_tables(run_data, diagnostics, output)
     _figures(diagnostics, output)
     _supplements(root, diagnostics, output)
+    _latex_tables(root, diagnostics, output, tables)
     _markdown_bundle(output, checks, tables)
     final = {"validation": {"checks": len(checks), "failures": sum(not c["passed"] for c in checks)},
              "main_tables": {"endpoint_reproducibility": tables["table1"], "ex_ante_recoverability": tables["table2"]},
