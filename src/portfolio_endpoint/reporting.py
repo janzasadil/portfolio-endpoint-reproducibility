@@ -198,7 +198,7 @@ def _write_tex(table: pd.DataFrame, output: Path, stem: str, caption: str, label
 
     body = table.to_latex(index=False, escape=False, float_format=format_number,
                           column_format="l" + "r" * (len(table.columns) - 1))
-    text = "\\begin{table}[H]\n\\centering\n\\caption{" + caption + "}\n\\label{" + label + "}\n" + body
+    text = "\\begin{table}[H]\n\\centering\n\\small\n\\caption{" + caption + "}\n\\label{" + label + "}\n" + body
     text += "\\begin{flushleft}\\footnotesize " + note + "\\end{flushleft}\n\\end{table}\n"
     (output / f"{stem}.tex").write_text(text, encoding="utf-8")
 
