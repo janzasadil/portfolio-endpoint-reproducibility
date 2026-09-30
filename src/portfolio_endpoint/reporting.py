@@ -194,13 +194,17 @@ def _write_tex(table: pd.DataFrame, output: Path, stem: str, caption: str, label
     def format_number(value: float) -> str:
         return f"{value:.0f}" if float(value).is_integer() else f"{value:.2f}"
 
-    # Values and headings must never contain raw percent signs, which would
-    # comment out the rest of a tabular row when ``escape=False`` is used.
-    latex_table = table.rename(columns=lambda name: str(name).replace("%", r"\%"))
+    # Values and headings must be safe while retaining readable text under
+    # ``escape=False``. In particular, raw ``%`` comments out a row and raw
+    # ``_`` enters math-subscript syntax.
+    def latex_text(value: str) -> str:
+        return value.replace("\\", r"\textbackslash{}").replace("%", r"\%").replace("_", r"\_").replace("&", r"\&")
+
+    latex_table = table.rename(columns=lambda name: latex_text(str(name)))
     for column in latex_table.columns:
         if latex_table[column].dtype == object:
             latex_table[column] = latex_table[column].map(
-                lambda value: value.replace("%", r"\%") if isinstance(value, str) else value
+                lambda value: latex_text(value) if isinstance(value, str) else value
             )
     body = latex_table.to_latex(index=False, escape=False, float_format=format_number,
                           column_format="l" + "r" * (len(table.columns) - 1))
