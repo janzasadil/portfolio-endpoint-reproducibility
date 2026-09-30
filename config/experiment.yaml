@@ -24,3 +24,8 @@ datasets:
     url: "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/30_Industry_Portfolios_CSV.zip"
     raw_file: "30_Industry_Portfolios_CSV.zip"
     processed_file: "ff_30_industry_value_weighted_monthly.csv"
+  replication_international_countries:
+    label: "French international country portfolios: broader USD market returns"
+    url: "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_International_Countries.zip"
+    raw_file: "F-F_International_Countries.zip"
+    processed_file: "ff_international_country_markets_usd_monthly.csv"
