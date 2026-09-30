@@ -196,9 +196,25 @@ def _write_tex(table: pd.DataFrame, output: Path, stem: str, caption: str, label
 
     body = table.to_latex(index=False, escape=False, float_format=format_number,
                           column_format="l" + "r" * (len(table.columns) - 1))
-    text = "\\begin{table}[!htbp]\n\\centering\n\\caption{" + caption + "}\n\\label{" + label + "}\n" + body
+    text = "\\begin{table}[H]\n\\centering\n\\caption{" + caption + "}\n\\label{" + label + "}\n" + body
     text += "\\begin{flushleft}\\footnotesize " + note + "\\end{flushleft}\n\\end{table}\n"
     (output / f"{stem}.tex").write_text(text, encoding="utf-8")
+
+
+def _write_figure_shells(output: Path) -> None:
+    """Pasteable strict-placement figure wrappers (requires ``\\usepackage{float}``)."""
+    figures = (
+        ("figure_1_winner_durability.tex", "figure_1_winner_durability.pdf", "Winner durability", "fig:durability",
+         "Literal first-switch and economically material first-failure survival. Material failure is a CEQ gap strictly greater than 25 bp."),
+        ("figure_2_endpoint_displacement_profiles.tex", "figure_2_endpoint_displacement_profiles.pdf", "Endpoint-displacement profiles", "fig:displacement",
+         "Mean endpoint loss and literal switching across the three saved endpoint displacements. Lines connect reported values only and do not impose a functional form."),
+    )
+    for filename, graphic, caption, label, note in figures:
+        text = ("\\begin{figure}[H]\n\\centering\n"
+                f"\\includegraphics[width=\\linewidth]{{{graphic}}}\n"
+                f"\\caption{{{caption}}}\n\\label{{{label}}}\n"
+                f"\\begin{{flushleft}}\\footnotesize {note}\\end{{flushleft}}\n\\end{{figure}}\n")
+        (output / filename).write_text(text, encoding="utf-8")
 
 
 def _latex_tables(root: Path, diagnostics: Path, output: Path, tables: dict) -> None:
@@ -324,6 +340,7 @@ def run_reporting(output_dir: Path | None = None) -> Path:
     _figures(diagnostics, output)
     _supplements(root, diagnostics, output)
     _latex_tables(root, diagnostics, output, tables)
+    _write_figure_shells(output)
     _markdown_bundle(output, checks, tables)
     final = {"validation": {"checks": len(checks), "failures": sum(not c["passed"] for c in checks)},
              "main_tables": {"endpoint_reproducibility": tables["table1"], "ex_ante_recoverability": tables["table2"]},
