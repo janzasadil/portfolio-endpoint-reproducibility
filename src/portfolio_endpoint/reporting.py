@@ -41,7 +41,9 @@ def _display_bp(value: float) -> str:
 
 
 def _display_pct(value: float) -> str:
-    return f"{100 * value:.1f}%"
+    # ``escape=False`` is intentional for readable headers; percentages must
+    # therefore be escaped explicitly for valid LaTex source.
+    return f"{100 * value:.1f}\\%"
 
 
 def _validate_run(root: Path, label: str, run_name: str, prefix: str) -> tuple[dict, list[dict]]:
