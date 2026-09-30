@@ -201,6 +201,9 @@ def _write_tex(table: pd.DataFrame, output: Path, stem: str, caption: str, label
     text = "\\begin{table}[H]\n\\centering\n\\small\n\\caption{" + caption + "}\n\\label{" + label + "}\n" + body
     text += "\\begin{flushleft}\\footnotesize " + note + "\\end{flushleft}\n\\end{table}\n"
     (output / f"{stem}.tex").write_text(text, encoding="utf-8")
+    # A tabular-only variant is deliberately provided for authors who need a
+    # custom table wrapper.  It must not be mixed with the complete table file.
+    (output / f"{stem}_body.tex").write_text(body, encoding="utf-8")
 
 
 def _write_figure_shells(output: Path) -> None:
@@ -217,6 +220,54 @@ def _write_figure_shells(output: Path) -> None:
                 f"\\caption{{{caption}}}\n\\label{{{label}}}\n"
                 f"\\begin{{flushleft}}\\footnotesize {note}\\end{{flushleft}}\n\\end{{figure}}\n")
         (output / filename).write_text(text, encoding="utf-8")
+
+
+def _write_latex_instructions(output: Path) -> None:
+    text = """# Including publication LaTeX assets
+
+Add these packages once in the preamble:
+
+```latex
+\\usepackage{float}
+\\usepackage{graphicx}
+\\usepackage{booktabs}
+```
+
+## Complete generated tables (recommended)
+
+Each `table_*.tex` file already contains `\\begin{table}[H]`, `\\small`, its
+caption, label, tabular, and note. Include it directly, with no outer
+`table`, `tabular`, `resizebox`, or `scalebox` environment:
+
+```latex
+\\input{tables/table_1_endpoint_reproducibility.tex}
+```
+
+## Custom table layouts
+
+Use the matching `*_body.tex` file only if you need to supply your own wrapper:
+
+```latex
+\\begin{table}[H]
+  \\centering
+  \\small
+  \\caption{Endpoint reproducibility}
+  \\label{tab:endpoint}
+  \\input{tables/table_1_endpoint_reproducibility_body.tex}
+\\end{table}
+```
+
+Never input the complete `.tex` table inside `\\resizebox`, `\\scalebox`, a
+second `table`, or a second `tabular`; that causes the `Misplaced \\noalign`
+and `Missing \\cr` errors visible in the supplied log. Avoid font-size commands
+such as `\\fontsize{0.5}{...}`. The generated tables set `\\small` themselves.
+
+## Figures
+
+The `figure_*.tex` files are complete `[H]` figure environments. Include them
+directly. Do not wrap them in another `figure` environment.
+"""
+    (output / "LATEX_INCLUSION.md").write_text(text, encoding="utf-8")
 
 
 def _latex_tables(root: Path, diagnostics: Path, output: Path, tables: dict) -> None:
@@ -343,6 +394,7 @@ def run_reporting(output_dir: Path | None = None) -> Path:
     _supplements(root, diagnostics, output)
     _latex_tables(root, diagnostics, output, tables)
     _write_figure_shells(output)
+    _write_latex_instructions(output)
     _markdown_bundle(output, checks, tables)
     final = {"validation": {"checks": len(checks), "failures": sum(not c["passed"] for c in checks)},
              "main_tables": {"endpoint_reproducibility": tables["table1"], "ex_ante_recoverability": tables["table2"]},
