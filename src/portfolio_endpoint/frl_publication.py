@@ -58,7 +58,7 @@ def main():
     disp=disp[['universe','h','sample','mean_endpoint_loss','p90_endpoint_loss','literal_switch_frequency','loss_exceeds_25bp_frequency','n_origins']].round(2)
     disp.columns=['Universe','h (months)','Sample','Mean loss (bp)','P90 (bp)','Switching (%)','Loss >25 bp (%)','n']; disp.to_csv(O/'table_A2_displacement_granularity.csv',index=False)
     # Appendix Figure A3: descriptive endpoint-displacement design points.
-    fig,ax=plt.subplots(figsize=(6.5,3.8),constrained_layout=True)
+    fig,ax=plt.subplots(figsize=(5.3,3.8),constrained_layout=True)
     figure2=disp.loc[(disp['Sample']=='full_eligible') & (disp['Universe']=='17 U.S. industries'),['Universe','h (months)','Mean loss (bp)']].copy()
     # The definitive primary bootstrap retained the three horizon-specific
     # draws.  The country run retained only its baseline (12-month) draws.
@@ -75,7 +75,11 @@ def main():
         x=g['h (months)']+offsets[universe]
         low=g['CI low (bp)'].astype(float); high=g['CI high (bp)'].astype(float)
         ax.errorbar(x,g['Mean loss (bp)'],yerr=[g['Mean loss (bp)']-low,high-g['Mean loss (bp)']],fmt='o',color=color,ecolor=color,capsize=3,label=universe)
+        for horizon,estimate,lo,hi in zip(x,g['Mean loss (bp)'],low,high):
+            offset=(-70,4) if horizon==24 else (7,4)
+            ax.annotate(f'{estimate:.2f}\n[{lo:.2f}, {hi:.2f}]',xy=(horizon,estimate),xytext=offset,textcoords='offset points',fontsize=8,va='bottom',ha='right' if horizon==24 else 'left')
     ax.set(xlabel='Endpoint displacement (months)',ylabel='Mean endpoint loss (CEQ bp)',xticks=[6,12,24])
+    ax.text(.02,.98,'Points: mean loss; whiskers: 95% stationary-bootstrap CI (B=2,000)',transform=ax.transAxes,ha='left',va='top',fontsize=8)
     fig.savefig(O/'figure_A3_endpoint_displacement.pdf'); fig.savefig(O/'figure_A3_endpoint_displacement.png',dpi=220); plt.close(fig)
     figure2.to_csv(O/'figure_A3_endpoint_displacement_source.csv',index=False)
     for sample,title,stem in [('full_eligible','Endpoint displacement: full eligible origins','table_A2_panel_A_full'),('common_calendar_origins','Endpoint displacement: common calendar origins','table_A2_panel_B_common')]:
