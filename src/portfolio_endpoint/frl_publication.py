@@ -35,7 +35,7 @@ def main():
         for label,path in [('Literal',l),('Material >25 bp',m)]:
             q=curve(pd.read_csv(path)); line=ax.step([0,*q.time_months],[1,*q.survival],where='post',label='Material (>25 bp)' if label.startswith('Material') else label); handles.extend(line if not handles else [])
         ax.set_title(title); ax.set(xlabel='Months since December origin',xlim=(0,150),ylim=(0,1.02))
-    axs[0].set_ylabel('Winner survival probability'); h,l=axs[0].get_legend_handles_labels(); fig.legend(h,l,loc='upper center',bbox_to_anchor=(.5,.995),ncol=2,frameon=False); fig.savefig(O/'figure_1_winner_durability.pdf'); fig.savefig(O/'figure_1_winner_durability.png',dpi=220); plt.close(fig)
+    axs[0].set_ylabel('Censored-KM winner survival probability'); h,l=axs[0].get_legend_handles_labels(); fig.legend(h,l,loc='upper center',bbox_to_anchor=(.5,.995),ncol=2,frameon=False); fig.savefig(O/'figure_1_winner_durability.pdf'); fig.savefig(O/'figure_1_winner_durability.png',dpi=220); plt.close(fig)
     # Lean appendix objects.
     sens=pd.read_csv(E/'primary17_gamma_cost_sensitivity.csv'); mat=pd.read_csv(E/'materiality_threshold_sensitivity.csv')
     extra=[]
@@ -45,11 +45,11 @@ def main():
     a1a=sens[['setting','mean_endpoint_loss','literal_switch_frequency','loss_exceeds_25bp_frequency','survival_12_complete_followup','median_survival_months_full_km']].copy()
     for col in ['mean_endpoint_loss']: a1a[col]*=10000
     for col in ['literal_switch_frequency','loss_exceeds_25bp_frequency','survival_12_complete_followup']: a1a[col]*=100
-    a1a=a1a.round(2); a1a.columns=['Setting','Mean loss (bp)','Switching (%)','Loss >25 bp (%)','S(12) (%)','Median survival (months)']
+    a1a=a1a.round(2); a1a.columns=['Setting','Mean loss (bp)','Switching (%)','Loss >25 bp (%)','Complete-follow-up S(12) (%)','Full-KM median survival (months)']
     # The L/rebalancing summaries do not store the 25-bp tail statistic.
     a1a['Loss >25 bp (%)']=a1a['Loss >25 bp (%)'].fillna('--')
     a1b=mat[['universe','threshold_bp','survival_12_complete_followup','survival_24_complete_followup','median_survival_months_full_km']].copy(); a1b['universe']=a1b['universe'].replace({'primary17':'17 U.S. industries','countries':'14 developed-country markets'}); a1b[['survival_12_complete_followup','survival_24_complete_followup']]*=100; a1b=a1b.round(1)
-    a1b.columns=['Universe','Threshold (bp)','S(12)','S(24)','Median survival (months)']
+    a1b.columns=['Universe','Threshold (bp)','Complete-follow-up S(12) (%)','Complete-follow-up S(24) (%)','Full-KM median survival (months)']
     a1a.to_csv(O/'table_A1_panel_A_specification_sensitivity.csv',index=False); a1b.to_csv(O/'table_A1_panel_B_materiality_thresholds.csv',index=False)
     tex(a1a,O/'table_A1_panel_A_specification_sensitivity.tex','Robustness summary: specification sensitivity','tab:robustness-specification'); tex(a1b,O/'table_A1_panel_B_materiality_thresholds.tex','Robustness summary: materiality thresholds','tab:robustness-materiality')
     disp=pd.concat([pd.read_csv(E/'primary17_displacement.csv').assign(universe='17 U.S. industries'),pd.read_csv(E/'countries_displacement.csv').assign(universe='14 developed-country markets')]).copy()
@@ -57,6 +57,14 @@ def main():
     for col in ['literal_switch_frequency','loss_exceeds_25bp_frequency']: disp[col]*=100
     disp=disp[['universe','h','sample','mean_endpoint_loss','p90_endpoint_loss','literal_switch_frequency','loss_exceeds_25bp_frequency','n_origins']].round(2)
     disp.columns=['Universe','h (months)','Sample','Mean loss (bp)','P90 (bp)','Switching (%)','Loss >25 bp (%)','n']; disp.to_csv(O/'table_A2_displacement_granularity.csv',index=False)
+    # Main Figure 2: the prespecified endpoint-displacement profile.
+    fig,ax=plt.subplots(figsize=(6.5,3.8),constrained_layout=True)
+    figure2=disp.loc[disp['Sample']=='full_eligible',['Universe','h (months)','Mean loss (bp)']].copy()
+    for universe,g in figure2.groupby('Universe',sort=False):
+        g=g.sort_values('h (months)'); ax.plot(g['h (months)'],g['Mean loss (bp)'],marker='o',linewidth=2,label=universe)
+    ax.set(xlabel='Endpoint displacement (months)',ylabel='Mean endpoint loss (bp)',xticks=[6,12,24])
+    ax.legend(frameon=False); fig.savefig(O/'figure_2_endpoint_displacement.pdf'); fig.savefig(O/'figure_2_endpoint_displacement.png',dpi=220); plt.close(fig)
+    figure2.to_csv(O/'figure_2_endpoint_displacement_source.csv',index=False)
     for sample,title,stem in [('full_eligible','Endpoint displacement: full eligible origins','table_A2_panel_A_full'),('common_calendar_origins','Endpoint displacement: common calendar origins','table_A2_panel_B_common')]:
         q=disp.loc[disp.Sample==sample].drop(columns='Sample'); q.to_csv(O/f'{stem}.csv',index=False); tex(q,O/f'{stem}.tex',title,f'tab:{stem}')
     s30=json.loads((R/'replication_30_B1000/summary.json').read_text()); i30=json.loads((R/'replication_30_B1000/outer_bootstrap_intervals.json').read_text()); q30=pd.DataFrame([['30 U.S. industries',f'{bp(s30["mean_endpoint_loss"]):.2f}',f'[{bp(i30["mean_endpoint_loss"][0]):.2f}, {bp(i30["mean_endpoint_loss"][1]):.2f}]',f'{pct(s30["literal_switch_frequency"]):.1f}%',s30['median_survival_months']]])
@@ -65,10 +73,12 @@ def main():
     for u,file in [('17 U.S. industries','primary17_winner_conditioned.csv'),('14 developed-country markets','countries_winner_conditioned.csv')]:
         q=pd.read_csv(E/file).set_index('original_winner').reindex(labels).reset_index(); q['universe']=u; frames.append(q)
     a3=pd.concat(frames); a3['original_winner']=a3.original_winner.map(labels); a3['mean_endpoint_loss']*=10000; a3['switch_frequency']*=100; a3['loss_exceeds_25bp']*=100; a3['sparse_note']=a3.n_origins.map(lambda n:'dagger: n<5' if pd.notna(n) and n<5 else ''); a3=a3.round(2); a3.columns=['Initial winner','Origins','Switching (%)','Mean loss (bp)','Median loss','Loss >25 bp (%)','Universe','Note']; a3=a3.fillna('--'); a3.to_csv(O/'table_A3_method_diagnostics.csv',index=False); tex(a3,O/'table_A3_method_diagnostics.tex','Method-conditioned outcomes. dagger indicates fewer than five origins.','tab:methods')
-    loo=pd.concat([pd.read_csv(E/'primary17_leave_one_out.csv').assign(universe='17 industries'),pd.read_csv(E/'countries_leave_one_out.csv').assign(universe='countries')]).round(4); loo.to_csv(O/'figure_A2_leave_one_out_source.csv',index=False)
+    loo=pd.concat([pd.read_csv(E/'primary17_leave_one_out.csv').assign(universe='17 industries'),pd.read_csv(E/'countries_leave_one_out.csv').assign(universe='countries')])
+    full_losses={'17 industries':p['mean_endpoint_loss'],'countries':c['mean_endpoint_loss']}
+    loo['influence_shift_bp']=loo.apply(lambda x:10000*(x['mean_endpoint_loss']-full_losses[x['universe']]),axis=1)
+    loo.to_csv(O/'figure_A2_leave_one_out_source.csv',index=False)
     fig,axs=plt.subplots(1,2,figsize=(10,5),constrained_layout=True)
-    refs={'17 industries':7.35,'countries':10.55}
-    for ax,(u,g) in zip(axs,loo.groupby('universe')): ax.plot(10000*g.mean_endpoint_loss,range(len(g)),'o'); ax.axvline(refs[u],ls='--',color='black',label='Full universe'); ax.set(title='17 U.S. industries' if u=='17 industries' else '14 developed-country markets',yticks=range(len(g)),yticklabels=g.omitted_asset,xlabel='Mean endpoint loss (bp)'); ax.legend(frameon=False)
+    for ax,(u,g) in zip(axs,loo.groupby('universe')): ax.plot(g.influence_shift_bp,range(len(g)),'o'); ax.axvline(0,ls='--',color='black'); ax.set(title='17 U.S. industries' if u=='17 industries' else '14 developed-country markets',yticks=range(len(g)),yticklabels=g.omitted_asset,xlabel='Change in mean endpoint loss (bp)')
     fig.savefig(O/'figure_A2_leave_one_out.pdf'); fig.savefig(O/'figure_A2_leave_one_out.png',dpi=220); plt.close(fig)
     # A4 panel A: endpoint inference under each resampling law.
     bootstrap_rows=[]
@@ -105,5 +115,5 @@ def main():
     methods=pd.DataFrame([['Equal weight','None','Equal weights','Long-only, fully invested','60 months','Monthly'],['Sample GMV','Sample covariance','Minimum variance','Long-only, fully invested','60 months','Monthly'],['Ledoit--Wolf GMV','Shrinkage covariance','Minimum variance','Long-only, fully invested','60 months','Monthly'],['Inverse volatility','Sample volatility','Inverse volatility weights','Long-only, fully invested','60 months','Monthly'],['ERC','Sample covariance','Equal risk contributions','Long-only, fully invested','60 months','Monthly']],columns=['Method','Risk input','Rule/objective','Constraints','Lookback','Rebalance'])
     datasets=pd.DataFrame([['17 U.S. industries',17,'Kenneth French','1926-07--2026-07','1931-07',84,75,'USD'],['14 developed-country markets',14,'Kenneth French international','1975-01--2025-12','1980-01',36,27,'USD'],['30 U.S. industries',30,'Kenneth French','1926-07--2026-07','1931-07',84,75,'USD']],columns=['Universe','Assets','Source','Sample','OOS start','Endpoint pairs','Ex-ante dates','Currency'])
     methods.to_csv(O/'table_A5_panel_A_methods.csv',index=False); datasets.to_csv(O/'table_A5_panel_B_data.csv',index=False); tex(methods,O/'table_A5_panel_A_methods.tex','Portfolio methods and sample construction: methods','tab:methods-reference'); tex(datasets,O/'table_A5_panel_B_data.tex','Portfolio methods and sample construction: datasets','tab:data-reference')
-    (O/'README.md').write_text('# Lean FRL bundle\n\nMain text: Table 1, Figure 1, Table 2. The margin diagnostic is reported in prose; its detailed CSV remains under results/extension. Appendix CSVs are compact source tables for typesetting.\n',encoding='utf8')
+    (O/'README.md').write_text('# Lean FRL bundle\n\nMain text: Table 1, Figure 1 (censored-KM winner durability), Figure 2 (descriptive endpoint displacement), and Table 2. Appendix Table A1 labels complete-follow-up survival separately from full Kaplan--Meier medians. The margin diagnostic remains a reproducibility artifact under results/extension.\n',encoding='utf8')
 if __name__=='__main__': main()
