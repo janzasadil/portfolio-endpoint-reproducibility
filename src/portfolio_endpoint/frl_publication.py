@@ -59,7 +59,7 @@ def main():
     disp.columns=['Universe','h (months)','Sample','Mean loss (bp)','P90 (bp)','Switching (%)','Loss >25 bp (%)','n']; disp.to_csv(O/'table_A2_displacement_granularity.csv',index=False)
     # Appendix Figure A3: descriptive endpoint-displacement design points.
     fig,ax=plt.subplots(figsize=(6.5,3.8),constrained_layout=True)
-    figure2=disp.loc[disp['Sample']=='full_eligible',['Universe','h (months)','Mean loss (bp)']].copy()
+    figure2=disp.loc[(disp['Sample']=='full_eligible') & (disp['Universe']=='17 U.S. industries'),['Universe','h (months)','Mean loss (bp)']].copy()
     # The definitive primary bootstrap retained the three horizon-specific
     # draws.  The country run retained only its baseline (12-month) draws.
     primary_draws=pd.read_csv(R/'primary_17_definitive_B2000/outer_bootstrap.csv')
@@ -69,18 +69,13 @@ def main():
     for h,(low,high) in primary_intervals.items():
         mask=(figure2['Universe']=='17 U.S. industries') & (figure2['h (months)']==h)
         figure2.loc[mask,['CI low (bp)','CI high (bp)']]=low,high
-    offsets={'17 U.S. industries':-.16,'14 developed-country markets':.16}
+    offsets={'17 U.S. industries':0}
     for universe,g in figure2.groupby('Universe',sort=False):
-        g=g.sort_values('h (months)'); color='tab:blue' if universe=='17 U.S. industries' else 'tab:orange'
+        g=g.sort_values('h (months)'); color='tab:blue'
         x=g['h (months)']+offsets[universe]
-        if universe=='17 U.S. industries':
-            low=g['CI low (bp)'].astype(float); high=g['CI high (bp)'].astype(float)
-            ax.errorbar(x,g['Mean loss (bp)'],yerr=[g['Mean loss (bp)']-low,high-g['Mean loss (bp)']],fmt='o',color=color,ecolor=color,capsize=3,label=universe)
-        else:
-            ax.scatter(x,g['Mean loss (bp)'],color=color,label=universe,zorder=3)
+        low=g['CI low (bp)'].astype(float); high=g['CI high (bp)'].astype(float)
+        ax.errorbar(x,g['Mean loss (bp)'],yerr=[g['Mean loss (bp)']-low,high-g['Mean loss (bp)']],fmt='o',color=color,ecolor=color,capsize=3,label=universe)
     ax.set(xlabel='Endpoint displacement (months)',ylabel='Mean endpoint loss (CEQ bp)',xticks=[6,12,24])
-    handles,legend_labels=ax.get_legend_handles_labels(); order=sorted(range(len(legend_labels)),key=lambda i:not legend_labels[i].startswith('17'))
-    ax.legend([handles[i] for i in order],[legend_labels[i] for i in order],frameon=False,loc='upper left')
     fig.savefig(O/'figure_A3_endpoint_displacement.pdf'); fig.savefig(O/'figure_A3_endpoint_displacement.png',dpi=220); plt.close(fig)
     figure2.to_csv(O/'figure_A3_endpoint_displacement_source.csv',index=False)
     for sample,title,stem in [('full_eligible','Endpoint displacement: full eligible origins','table_A2_panel_A_full'),('common_calendar_origins','Endpoint displacement: common calendar origins','table_A2_panel_B_common')]:
@@ -133,5 +128,5 @@ def main():
     methods=pd.DataFrame([['Equal weight','None','Equal weights','Long-only, fully invested','60 months','Monthly'],['Sample GMV','Sample covariance','Minimum variance','Long-only, fully invested','60 months','Monthly'],['Ledoit--Wolf GMV','Shrinkage covariance','Minimum variance','Long-only, fully invested','60 months','Monthly'],['Inverse volatility','Sample volatility','Inverse volatility weights','Long-only, fully invested','60 months','Monthly'],['ERC','Sample covariance','Equal risk contributions','Long-only, fully invested','60 months','Monthly']],columns=['Method','Risk input','Rule/objective','Constraints','Lookback','Rebalance'])
     datasets=pd.DataFrame([['17 U.S. industries',17,'Kenneth French','1926-07--2026-07','1931-07',84,75,'USD'],['14 developed-country markets',14,'Kenneth French international','1975-01--2025-12','1980-01',36,27,'USD'],['30 U.S. industries',30,'Kenneth French','1926-07--2026-07','1931-07',84,75,'USD']],columns=['Universe','Assets','Source','Sample','OOS start','Endpoint pairs','Ex-ante dates','Currency'])
     methods.to_csv(O/'table_A5_panel_A_methods.csv',index=False); datasets.to_csv(O/'table_A5_panel_B_data.csv',index=False); tex(methods,O/'table_A5_panel_A_methods.tex','Portfolio methods and sample construction: methods','tab:methods-reference'); tex(datasets,O/'table_A5_panel_B_data.tex','Portfolio methods and sample construction: datasets','tab:data-reference')
-    (O/'README.md').write_text('# Lean FRL bundle\n\nMain text: Table 1, Figure 1 (censored-KM winner durability), and Table 2. Appendix Figure A3 is a point-range display of the three prespecified endpoint-displacement estimands; it does not imply a fitted continuous relationship. Industry error bars are 95% stationary-bootstrap percentile intervals from the saved B=2000 horizon-specific draws. The country run saved bootstrap draws only for h=12, so its h=6 and h=24 points are intentionally shown without non-comparable intervals. Appendix Table A1 labels complete-follow-up survival separately from full Kaplan--Meier medians. The margin diagnostic remains a reproducibility artifact under results/extension.\n',encoding='utf8')
+    (O/'README.md').write_text('# Lean FRL bundle\n\nMain text: Table 1, Figure 1 (censored-KM winner durability), and Table 2. Appendix Figure A3 is a primary-universe point-range display of the three prespecified endpoint-displacement estimands; it does not imply a fitted continuous relationship. Error bars are 95% stationary-bootstrap percentile intervals from the saved B=2000 horizon-specific draws. The 14-country h=6/12/24 estimates remain in Appendix Table A2 as descriptive replication evidence because their horizon-specific bootstrap draws were not retained. Appendix Table A1 labels complete-follow-up survival separately from full Kaplan--Meier medians. The margin diagnostic remains a reproducibility artifact under results/extension.\n',encoding='utf8')
 if __name__=='__main__': main()
