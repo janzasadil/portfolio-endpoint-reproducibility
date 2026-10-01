@@ -21,15 +21,15 @@ def tex(df,path,caption,label):
 def fragment(df,path): path.write_text(tabular(df),encoding='utf8')
 def parent_table(path,caption,label,panels):
     body=['\\begin{table}[!htbp]','\\centering','\\small',f'\\caption{{{caption}}}',f'\\label{{{label}}}']
-    for heading,filename in panels:
-        body.extend([f'\\textit{{{heading}}}',f'\\input{{{filename}}}','\\vspace{0.8em}'])
+    for heading,content in panels:
+        body.extend([f'\\textit{{{heading}}}',content,'\\vspace{0.8em}'])
     body.append('\\end{table}')
     path.write_text('\n'.join(body)+'\n',encoding='utf8')
 def curve(audit): return kaplan_meier(audit.rename(columns={'survival_duration_months':'time_months'})[['time_months','event']])
 def main():
     root=project_root(); R=root/'results'; D=R/'diagnostics'; E=R/'extension'; C=R/'country_replication_B1000'; O=R/'publication_frl'; O.mkdir(parents=True,exist_ok=True)
     # Remove names superseded by the consolidated appendix objects on reruns.
-    for stale in ['figure_A1_transition_14.pdf','figure_A1_transition_17.pdf','figure_A3_endpoint_displacement.pdf','figure_A3_endpoint_displacement.png','figure_A3_endpoint_displacement_source.csv','table_A2_displacement_granularity.csv','table_A2_displacement_granularity.tex','table_A2_panel_A_full.csv','table_A2_panel_A_full.tex','table_A2_panel_B_common.csv','table_A2_panel_B_common.tex','table_A2_panel_C_30industry.csv','table_A2_panel_C_30industry.tex','table_A3_method_diagnostics.csv','table_A3_method_diagnostics.tex','table_A4_bootstrap_audit.csv','table_A4_bootstrap_audit.tex']:
+    for stale in ['figure_A1_transition_14.pdf','figure_A1_transition_17.pdf','figure_A3_endpoint_displacement.pdf','figure_A3_endpoint_displacement.png','figure_A3_endpoint_displacement_source.csv','table_A2_displacement_granularity.csv','table_A2_displacement_granularity.tex','table_A2_panel_A_full.csv','table_A2_panel_A_full.tex','table_A2_panel_B_common.csv','table_A2_panel_B_common.tex','table_A2_panel_C_30industry.csv','table_A2_panel_C_30industry.tex','table_A3_method_diagnostics.csv','table_A3_method_diagnostics.tex','table_A4_bootstrap_audit.csv','table_A4_bootstrap_audit.tex','table_A1_panel_A_specification_sensitivity.tex','table_A1_panel_B_materiality_thresholds.tex','table_A2_panel_A_common_origin.tex','table_A2_panel_B_30industry.tex','table_A3_panel_A_us_industries.tex','table_A3_panel_B_countries.tex','table_A4_panel_A_endpoint_inference.tex','table_A4_panel_B_country_secondary.tex','table_A4_panel_C_primary_displacement_intervals.tex','table_A5_panel_A_methods.tex','table_A5_panel_B_data.tex']:
         (O/stale).unlink(missing_ok=True)
     p=json.loads((R/'primary_17_definitive_B2000/summary.json').read_text()); pi=json.loads((R/'primary_17_definitive_B2000/outer_bootstrap_intervals.json').read_text()); c=json.loads((C/'summary.json').read_text()); ci=json.loads((C/'outer_bootstrap_intervals.json').read_text())
     t1=pd.DataFrame([['Endpoint pairs',84,36],['Mean endpoint loss (bp)',f'{bp(p["mean_endpoint_loss"]):.2f}',f'{bp(c["mean_endpoint_loss"]):.2f}'],['95% bootstrap CI (bp)',f'[{bp(pi["baseline_mean_endpoint_loss"][0]):.2f}, {bp(pi["baseline_mean_endpoint_loss"][1]):.2f}]',f'[{bp(ci["mean_endpoint_loss"][0]):.2f}, {bp(ci["mean_endpoint_loss"][1]):.2f}]'],['Median (bp)','0.00','0.00'],['P75 (bp)',f'{bp(p["p75_endpoint_loss"]):.2f}',f'{bp(c["p75_endpoint_loss"]):.2f}'],['P90 (bp)',f'{bp(p["p90_endpoint_loss"]):.2f}',f'{bp(c["p90_endpoint_loss"]):.2f}'],['Literal switching',f'{pct(p["literal_switch_frequency"]):.1f}%',f'{pct(c["literal_switch_frequency"]):.1f}%']],columns=['Metric','17 U.S. industries','14 developed-country markets'])
@@ -61,8 +61,7 @@ def main():
     a1b.columns=['Universe','Threshold (bp)','Complete-follow-up S(12) (%)','Complete-follow-up S(24) (%)','Full-KM median survival (months)']
     a1a.to_csv(O/'table_A1_panel_A_specification_sensitivity.csv',index=False); a1b.to_csv(O/'table_A1_panel_B_materiality_thresholds.csv',index=False)
     a1a_tex=tabular(a1a).replace('\\midrule\n','\\midrule\n\\multicolumn{6}{l}{\\textit{Estimation / rebalancing}} \\\\\n',1).replace('gamma2 &','\\multicolumn{6}{l}{\\textit{Risk aversion}} \\\\\ngamma2 &').replace('cost0 &','\\multicolumn{6}{l}{\\textit{Transaction costs}} \\\\\ncost0 &')
-    (O/'table_A1_panel_A_specification_sensitivity.tex').write_text(a1a_tex,encoding='utf8'); fragment(a1b,O/'table_A1_panel_B_materiality_thresholds.tex')
-    parent_table(O/'table_A1.tex','Robustness to specification choices','tab:robustness',[('Panel A. Implementation and preference sensitivity','table_A1_panel_A_specification_sensitivity.tex'),('Panel B. Economic-materiality threshold','table_A1_panel_B_materiality_thresholds.tex')])
+    parent_table(O/'table_A1.tex','Robustness to specification choices','tab:robustness',[('Panel A. Implementation and preference sensitivity',a1a_tex),('Panel B. Economic-materiality threshold',tabular(a1b))])
     disp=pd.concat([pd.read_csv(E/'primary17_displacement.csv').assign(universe='17 U.S. industries'),pd.read_csv(E/'countries_displacement.csv').assign(universe='14 developed-country markets')]).copy()
     for col in ['mean_endpoint_loss','median_endpoint_loss','p75_endpoint_loss','p90_endpoint_loss']: disp[col]*=10000
     for col in ['literal_switch_frequency','loss_exceeds_25bp_frequency']: disp[col]*=100
@@ -83,10 +82,10 @@ def main():
     primary_draws=pd.read_csv(R/'primary_17_definitive_B2000/outer_bootstrap.csv')
     primary_columns={6:'h6_mean_endpoint_loss',12:'baseline_mean_endpoint_loss',24:'h24_mean_endpoint_loss'}
     primary_intervals={h:(10000*primary_draws[column].quantile(.025),10000*primary_draws[column].quantile(.975)) for h,column in primary_columns.items()}
-    q_common=disp.loc[disp.Sample=='common_calendar_origins'].drop(columns='Sample'); q_common.to_csv(O/'table_A2_panel_A_common_origin.csv',index=False); fragment(q_common,O/'table_A2_panel_A_common_origin.tex')
+    q_common=disp.loc[disp.Sample=='common_calendar_origins'].drop(columns='Sample'); q_common.to_csv(O/'table_A2_panel_A_common_origin.csv',index=False)
     s30=json.loads((R/'replication_30_B1000/summary.json').read_text()); i30=json.loads((R/'replication_30_B1000/outer_bootstrap_intervals.json').read_text()); q30=pd.DataFrame([['30 U.S. industries',f'{bp(s30["mean_endpoint_loss"]):.2f}',f'[{bp(i30["mean_endpoint_loss"][0]):.2f}, {bp(i30["mean_endpoint_loss"][1]):.2f}]',f'{pct(s30["literal_switch_frequency"]):.1f}%',s30['median_survival_months']]])
-    q30.columns=['Universe','Mean loss (bp)','95% CI (bp)','Switching','Literal median (months)']; q30.to_csv(O/'table_A2_panel_B_30industry.csv',index=False); fragment(q30,O/'table_A2_panel_B_30industry.tex')
-    parent_table(O/'table_A2.tex','Additional robustness across horizons and universes','tab:additional-robustness',[('Panel A. Common-origin endpoint-displacement robustness','table_A2_panel_A_common_origin.tex'),('Panel B. 30-industry granularity check','table_A2_panel_B_30industry.tex')])
+    q30.columns=['Universe','Mean loss (bp)','95% CI (bp)','Switching','Literal median (months)']; q30.to_csv(O/'table_A2_panel_B_30industry.csv',index=False)
+    parent_table(O/'table_A2.tex','Additional robustness across horizons and universes','tab:additional-robustness',[('Panel A. Common-origin endpoint-displacement robustness',tabular(q_common)),('Panel B. 30-industry granularity check',tabular(q30))])
     labels={'equal_weight':'Equal weight','sample_gmv':'Sample GMV','ledoit_wolf_gmv':'Ledoit--Wolf GMV','inverse_volatility':'Inverse volatility','erc':'ERC'}; frames=[]
     for u,file in [('17 U.S. industries','primary17_winner_conditioned.csv'),('14 developed-country markets','countries_winner_conditioned.csv')]:
         q=pd.read_csv(E/file).set_index('original_winner').reindex(labels).reset_index(); q['universe']=u; frames.append(q)
@@ -96,8 +95,7 @@ def main():
     a3.columns=['Initial winner','Origins','Switching (%)','Mean loss (bp)','Loss >25 bp (%)','Universe']
     a3.to_csv(O/'source_A3_method_diagnostics_all.csv',index=False)
     a3_us=a3.loc[a3['Universe']=='17 U.S. industries'].drop(columns='Universe'); a3_country=a3.loc[a3['Universe']=='14 developed-country markets'].drop(columns='Universe')
-    fragment(a3_us,O/'table_A3_panel_A_us_industries.tex'); fragment(a3_country,O/'table_A3_panel_B_countries.tex')
-    parent_table(O/'table_A3.tex','Method-conditioned diagnostics. \\(\\dagger\\) indicates fewer than five eligible origins; conditional statistics are descriptive only.','tab:methods',[('Panel A. 17 U.S. industries','table_A3_panel_A_us_industries.tex'),('Panel B. 14 developed-country markets','table_A3_panel_B_countries.tex')])
+    parent_table(O/'table_A3.tex','Method-conditioned diagnostics. \\(\\dagger\\) indicates fewer than five eligible origins; conditional statistics are descriptive only.','tab:methods',[('Panel A. 17 U.S. industries',tabular(a3_us)),('Panel B. 14 developed-country markets',tabular(a3_country))])
     loo=pd.concat([pd.read_csv(E/'primary17_leave_one_out.csv').assign(universe='17 industries'),pd.read_csv(E/'countries_leave_one_out.csv').assign(universe='countries')])
     full_losses={'17 industries':p['mean_endpoint_loss'],'countries':c['mean_endpoint_loss']}
     loo['influence_shift_bp']=loo.apply(lambda x:10000*(x['mean_endpoint_loss']-full_losses[x['universe']]),axis=1)
@@ -117,14 +115,14 @@ def main():
         s=json.loads((R/folder/'summary.json').read_text()); interval=json.loads((R/folder/'outer_bootstrap_intervals.json').read_text())[key]
         bootstrap_rows.append([name,design,reps,bp(s['mean_endpoint_loss']),f'[{bp(interval[0]):.2f}, {bp(interval[1]):.2f}]'])
     a4a=pd.DataFrame(bootstrap_rows,columns=['Universe','Bootstrap design','B','Endpoint loss (bp)','95% CI (bp)']).round(2)
-    a4a.to_csv(O/'table_A4_panel_A_endpoint_inference.csv',index=False); fragment(a4a,O/'table_A4_panel_A_endpoint_inference.tex')
+    a4a.to_csv(O/'table_A4_panel_A_endpoint_inference.csv',index=False)
     a4b=pd.read_csv(E/'country_bootstrap_B1000_summary.csv')[['metric','point_estimate','ci_low','ci_high','unit','bootstrap_replications']].copy()
     a4b['Estimate']=a4b.apply(lambda x:f"{x.point_estimate:.2f}",axis=1); a4b['95% CI']=a4b.apply(lambda x:f"[{x.ci_low:.2f}, {x.ci_high:.2f}]",axis=1)
     a4b=a4b[['metric','Estimate','95% CI','unit']]; a4b.columns=['Country statistic','Estimate','95% CI','Unit']
-    a4b.to_csv(O/'table_A4_panel_B_country_secondary.csv',index=False); fragment(a4b,O/'table_A4_panel_B_country_secondary.tex')
+    a4b.to_csv(O/'table_A4_panel_B_country_secondary.csv',index=False)
     a4c=pd.DataFrame([[h,figure2.loc[(figure2['Universe']=='17 U.S. industries') & (figure2['h (months)']==h),'Mean loss (bp)'].iloc[0],f'[{low:.2f}, {high:.2f}]'] for h,(low,high) in primary_intervals.items()],columns=['Displacement (months)','Endpoint loss (CEQ bp)','95% CI (bp)']).round(2)
-    a4c.to_csv(O/'table_A4_panel_C_primary_displacement_intervals.csv',index=False); fragment(a4c,O/'table_A4_panel_C_primary_displacement_intervals.tex')
-    parent_table(O/'table_A4.tex','Bootstrap inference audit','tab:bootstrap',[('Panel A. Endpoint-loss inference','table_A4_panel_A_endpoint_inference.tex'),('Primary 17-industry displacement intervals','table_A4_panel_C_primary_displacement_intervals.tex'),('Panel B. Country secondary outcomes (all intervals use B=1,000 stationary-bootstrap replications)','table_A4_panel_B_country_secondary.tex')])
+    a4c.to_csv(O/'table_A4_panel_C_primary_displacement_intervals.csv',index=False)
+    parent_table(O/'table_A4.tex','Bootstrap inference audit','tab:bootstrap',[('Panel A. Endpoint-loss inference',tabular(a4a)),('Primary 17-industry displacement intervals',tabular(a4c)),('Panel B. Country secondary outcomes (all intervals use B=1,000 stationary-bootstrap replications)',tabular(a4b))])
     # Figure A1: two transition matrices, directly comparable on a 0--100 scale.
     matrices=[]
     for name,file,winner_file in [('17 U.S. industries',E/'primary17_transition_row_percent.csv',E/'primary17_winner_conditioned.csv'),('14 developed-country markets',E/'countries_transition_row_percent.csv',E/'countries_winner_conditioned.csv')]:
@@ -143,8 +141,8 @@ def main():
     fig.colorbar(im,ax=axs,label='Row percentage',shrink=.85); fig.savefig(O/'figure_A1_transition_matrices.pdf'); fig.savefig(O/'figure_A1_transition_matrices.png',dpi=220); plt.close(fig)
     methods=pd.DataFrame([['Equal weight','None','Equal weights','Long-only, fully invested','60 months','Monthly'],['Sample GMV','Sample covariance','Minimum variance','Long-only, fully invested','60 months','Monthly'],['Ledoit--Wolf GMV','Shrinkage covariance','Minimum variance','Long-only, fully invested','60 months','Monthly'],['Inverse volatility','Sample volatility','Inverse volatility weights','Long-only, fully invested','60 months','Monthly'],['ERC','Sample covariance','Equal risk contributions','Long-only, fully invested','60 months','Monthly']],columns=['Method','Risk input','Rule/objective','Constraints','Lookback','Rebalance'])
     datasets=pd.DataFrame([['17 U.S. industries',17,'Kenneth French','1926-07--2026-07','1931-07',84,75,'USD'],['14 developed-country markets',14,'Kenneth French international','1975-01--2025-12','1980-01',36,27,'USD'],['30 U.S. industries',30,'Kenneth French','1926-07--2026-07','1931-07',84,75,'USD']],columns=['Universe','Assets','Source','Sample','OOS start','Endpoint pairs','Ex-ante dates','Currency'])
-    methods.to_csv(O/'table_A5_panel_A_methods.csv',index=False); datasets.to_csv(O/'table_A5_panel_B_data.csv',index=False); fragment(methods,O/'table_A5_panel_A_methods.tex'); fragment(datasets,O/'table_A5_panel_B_data.tex')
-    parent_table(O/'table_A5.tex','Portfolio methods and sample construction','tab:implementation-data',[('Panel A. Portfolio methods','table_A5_panel_A_methods.tex'),('Panel B. Data and analysis samples','table_A5_panel_B_data.tex')])
-    (O/'README.md').write_text('# Lean FRL bundle\n\nMain text: Table 1, Figure 1 (censored-KM winner durability), Figure 2 (endpoint-displacement profiles), and Table 2. For the appendix, insert only `table_A1.tex` through `table_A5.tex`: these are the five publication-level floats. Their `table_A*_panel_*.tex` files are modular tabular-only fragments, not standalone floats. Appendix Table A4 includes the primary h=6/12/24 bootstrap intervals.\n',encoding='utf8')
+    methods.to_csv(O/'table_A5_panel_A_methods.csv',index=False); datasets.to_csv(O/'table_A5_panel_B_data.csv',index=False)
+    parent_table(O/'table_A5.tex','Portfolio methods and sample construction','tab:implementation-data',[('Panel A. Portfolio methods',tabular(methods)),('Panel B. Data and analysis samples',tabular(datasets))])
+    (O/'README.md').write_text('# Lean FRL bundle\n\nMain text: Table 1, Figure 1 (censored-KM winner durability), Figure 2 (endpoint-displacement profiles), and Table 2. For the appendix, insert only `table_A1.tex` through `table_A5.tex`: these are the five publication-level floats, with their panels already inlined. CSV files remain as reproducibility sources. Appendix Table A4 includes the primary h=6/12/24 bootstrap intervals.\n',encoding='utf8')
     (O/'FIGURE_NOTES.md').write_text('# Figure captions and notes\n\n## Figure 2. Endpoint-displacement profiles\n\nPoints are deterministic mean endpoint losses at the prespecified displacement horizons. Lines connect the three reported horizons for visual guidance only; no functional form or monotonicity is estimated.\n\n## Figure A2. Leave-one-out sensitivity of mean endpoint loss\n\nEach point is the change in mean endpoint loss when the named asset is omitted, relative to the full universe. Removing an asset changes both portfolio composition and cross-sectional dimension; values are sensitivity diagnostics, not asset-specific causal contributions.\n',encoding='utf8')
 if __name__=='__main__': main()
