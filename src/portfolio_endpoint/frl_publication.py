@@ -20,7 +20,7 @@ def curve(audit): return kaplan_meier(audit.rename(columns={'survival_duration_m
 def main():
     root=project_root(); R=root/'results'; D=R/'diagnostics'; E=R/'extension'; C=R/'country_replication_B1000'; O=R/'publication_frl'; O.mkdir(parents=True,exist_ok=True)
     # Remove names superseded by the consolidated appendix objects on reruns.
-    for stale in ['figure_A1_transition_14.pdf','figure_A1_transition_17.pdf','table_A4_bootstrap_audit.csv','table_A4_bootstrap_audit.tex']:
+    for stale in ['figure_A1_transition_14.pdf','figure_A1_transition_17.pdf','figure_2_endpoint_displacement.pdf','figure_2_endpoint_displacement.png','figure_2_endpoint_displacement_source.csv','table_A4_bootstrap_audit.csv','table_A4_bootstrap_audit.tex']:
         (O/stale).unlink(missing_ok=True)
     p=json.loads((R/'primary_17_definitive_B2000/summary.json').read_text()); pi=json.loads((R/'primary_17_definitive_B2000/outer_bootstrap_intervals.json').read_text()); c=json.loads((C/'summary.json').read_text()); ci=json.loads((C/'outer_bootstrap_intervals.json').read_text())
     t1=pd.DataFrame([['Endpoint pairs',84,36],['Mean endpoint loss (bp)',f'{bp(p["mean_endpoint_loss"]):.2f}',f'{bp(c["mean_endpoint_loss"]):.2f}'],['95% bootstrap CI (bp)',f'[{bp(pi["baseline_mean_endpoint_loss"][0]):.2f}, {bp(pi["baseline_mean_endpoint_loss"][1]):.2f}]',f'[{bp(ci["mean_endpoint_loss"][0]):.2f}, {bp(ci["mean_endpoint_loss"][1]):.2f}]'],['Median (bp)','0.00','0.00'],['P75 (bp)',f'{bp(p["p75_endpoint_loss"]):.2f}',f'{bp(c["p75_endpoint_loss"]):.2f}'],['P90 (bp)',f'{bp(p["p90_endpoint_loss"]):.2f}',f'{bp(c["p90_endpoint_loss"]):.2f}'],['Literal switching',f'{pct(p["literal_switch_frequency"]):.1f}%',f'{pct(c["literal_switch_frequency"]):.1f}%']],columns=['Metric','17 U.S. industries','14 developed-country markets'])
@@ -57,14 +57,16 @@ def main():
     for col in ['literal_switch_frequency','loss_exceeds_25bp_frequency']: disp[col]*=100
     disp=disp[['universe','h','sample','mean_endpoint_loss','p90_endpoint_loss','literal_switch_frequency','loss_exceeds_25bp_frequency','n_origins']].round(2)
     disp.columns=['Universe','h (months)','Sample','Mean loss (bp)','P90 (bp)','Switching (%)','Loss >25 bp (%)','n']; disp.to_csv(O/'table_A2_displacement_granularity.csv',index=False)
-    # Main Figure 2: the prespecified endpoint-displacement profile.
+    # Appendix Figure A3: descriptive endpoint-displacement design points.
     fig,ax=plt.subplots(figsize=(6.5,3.8),constrained_layout=True)
     figure2=disp.loc[disp['Sample']=='full_eligible',['Universe','h (months)','Mean loss (bp)']].copy()
+    label_offsets={'17 U.S. industries':-0.32,'14 developed-country markets':0.28}
     for universe,g in figure2.groupby('Universe',sort=False):
-        g=g.sort_values('h (months)'); ax.plot(g['h (months)'],g['Mean loss (bp)'],marker='o',linewidth=2,label=universe)
-    ax.set(xlabel='Endpoint displacement (months)',ylabel='Mean endpoint loss (bp)',xticks=[6,12,24])
-    ax.legend(frameon=False); fig.savefig(O/'figure_2_endpoint_displacement.pdf'); fig.savefig(O/'figure_2_endpoint_displacement.png',dpi=220); plt.close(fig)
-    figure2.to_csv(O/'figure_2_endpoint_displacement_source.csv',index=False)
+        g=g.sort_values('h (months)'); line=ax.plot(g['h (months)'],g['Mean loss (bp)'],marker='o',linewidth=2)[0]
+        ax.annotate(universe,xy=(24,g['Mean loss (bp)'].iloc[-1]),xytext=(7,label_offsets[universe]),textcoords='offset points',va='center',color=line.get_color(),fontsize=9)
+    ax.set(xlabel='Endpoint displacement (months)',ylabel='Mean endpoint loss (CEQ bp)',xticks=[6,12,24])
+    fig.savefig(O/'figure_A3_endpoint_displacement.pdf'); fig.savefig(O/'figure_A3_endpoint_displacement.png',dpi=220); plt.close(fig)
+    figure2.to_csv(O/'figure_A3_endpoint_displacement_source.csv',index=False)
     for sample,title,stem in [('full_eligible','Endpoint displacement: full eligible origins','table_A2_panel_A_full'),('common_calendar_origins','Endpoint displacement: common calendar origins','table_A2_panel_B_common')]:
         q=disp.loc[disp.Sample==sample].drop(columns='Sample'); q.to_csv(O/f'{stem}.csv',index=False); tex(q,O/f'{stem}.tex',title,f'tab:{stem}')
     s30=json.loads((R/'replication_30_B1000/summary.json').read_text()); i30=json.loads((R/'replication_30_B1000/outer_bootstrap_intervals.json').read_text()); q30=pd.DataFrame([['30 U.S. industries',f'{bp(s30["mean_endpoint_loss"]):.2f}',f'[{bp(i30["mean_endpoint_loss"][0]):.2f}, {bp(i30["mean_endpoint_loss"][1]):.2f}]',f'{pct(s30["literal_switch_frequency"]):.1f}%',s30['median_survival_months']]])
@@ -115,5 +117,5 @@ def main():
     methods=pd.DataFrame([['Equal weight','None','Equal weights','Long-only, fully invested','60 months','Monthly'],['Sample GMV','Sample covariance','Minimum variance','Long-only, fully invested','60 months','Monthly'],['Ledoit--Wolf GMV','Shrinkage covariance','Minimum variance','Long-only, fully invested','60 months','Monthly'],['Inverse volatility','Sample volatility','Inverse volatility weights','Long-only, fully invested','60 months','Monthly'],['ERC','Sample covariance','Equal risk contributions','Long-only, fully invested','60 months','Monthly']],columns=['Method','Risk input','Rule/objective','Constraints','Lookback','Rebalance'])
     datasets=pd.DataFrame([['17 U.S. industries',17,'Kenneth French','1926-07--2026-07','1931-07',84,75,'USD'],['14 developed-country markets',14,'Kenneth French international','1975-01--2025-12','1980-01',36,27,'USD'],['30 U.S. industries',30,'Kenneth French','1926-07--2026-07','1931-07',84,75,'USD']],columns=['Universe','Assets','Source','Sample','OOS start','Endpoint pairs','Ex-ante dates','Currency'])
     methods.to_csv(O/'table_A5_panel_A_methods.csv',index=False); datasets.to_csv(O/'table_A5_panel_B_data.csv',index=False); tex(methods,O/'table_A5_panel_A_methods.tex','Portfolio methods and sample construction: methods','tab:methods-reference'); tex(datasets,O/'table_A5_panel_B_data.tex','Portfolio methods and sample construction: datasets','tab:data-reference')
-    (O/'README.md').write_text('# Lean FRL bundle\n\nMain text: Table 1, Figure 1 (censored-KM winner durability), Figure 2 (descriptive endpoint displacement), and Table 2. Appendix Table A1 labels complete-follow-up survival separately from full Kaplan--Meier medians. The margin diagnostic remains a reproducibility artifact under results/extension.\n',encoding='utf8')
+    (O/'README.md').write_text('# Lean FRL bundle\n\nMain text: Table 1, Figure 1 (censored-KM winner durability), and Table 2. Appendix Figure A3 gives the descriptive endpoint-displacement profile; connecting segments are guides between the three prespecified design points, not a fitted functional relationship. Appendix Table A1 labels complete-follow-up survival separately from full Kaplan--Meier medians. The margin diagnostic remains a reproducibility artifact under results/extension.\n',encoding='utf8')
 if __name__=='__main__': main()
