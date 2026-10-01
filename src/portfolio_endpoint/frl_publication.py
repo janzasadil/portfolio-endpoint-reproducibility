@@ -32,7 +32,13 @@ def main():
         ax.set_title(title); ax.set(xlabel='Months since December origin',ylim=(0,1.02)); ax.legend(frameon=False,fontsize=8)
     axs[0].set_ylabel('First-failure survival'); fig.savefig(O/'figure_1_winner_durability.pdf'); fig.savefig(O/'figure_1_winner_durability.png',dpi=220); plt.close(fig)
     # Lean appendix objects.
-    sens=pd.read_csv(E/'primary17_gamma_cost_sensitivity.csv'); mat=pd.read_csv(E/'materiality_threshold_sensitivity.csv'); a1=pd.concat([sens.assign(panel='primary sensitivity'),mat.assign(panel='materiality threshold')],ignore_index=True).round(4); a1.to_csv(O/'table_A1_robustness.csv',index=False); tex(a1,O/'table_A1_robustness.tex','Robustness summary','tab:robustness')
+    sens=pd.read_csv(E/'primary17_gamma_cost_sensitivity.csv'); mat=pd.read_csv(E/'materiality_threshold_sensitivity.csv')
+    a1a=sens[['setting','mean_endpoint_loss','median_endpoint_loss','literal_switch_frequency','loss_exceeds_25bp_frequency','survival_12_complete_followup','survival_24_complete_followup','median_survival_months_full_km']].round(4)
+    a1a.columns=['Setting','Mean loss','Median loss','Switching','Loss >25 bp','S(12)','S(24)','Median survival (months)']
+    a1b=mat[['universe','threshold_bp','survival_12_complete_followup','survival_24_complete_followup','median_survival_months_full_km']].round(4)
+    a1b.columns=['Universe','Threshold (bp)','S(12)','S(24)','Median survival (months)']
+    a1a.to_csv(O/'table_A1_panel_A_specification_sensitivity.csv',index=False); a1b.to_csv(O/'table_A1_panel_B_materiality_thresholds.csv',index=False)
+    tex(a1a,O/'table_A1_panel_A_specification_sensitivity.tex','Robustness summary: specification sensitivity','tab:robustness-specification'); tex(a1b,O/'table_A1_panel_B_materiality_thresholds.tex','Robustness summary: materiality thresholds','tab:robustness-materiality')
     disp=pd.concat([pd.read_csv(E/'primary17_displacement.csv').assign(universe='17 industries'),pd.read_csv(E/'countries_displacement.csv').assign(universe='countries')]).round(4); disp.to_csv(O/'table_A2_displacement_granularity.csv',index=False); tex(disp,O/'table_A2_displacement_granularity.tex','Endpoint displacement and granularity','tab:displacement')
     a3=pd.concat([pd.read_csv(E/'primary17_winner_conditioned.csv').assign(universe='17 industries'),pd.read_csv(E/'countries_winner_conditioned.csv').assign(universe='countries')]).round(4); a3.to_csv(O/'table_A3_method_diagnostics.csv',index=False); tex(a3,O/'table_A3_method_diagnostics.tex','Method-conditioned outcomes','tab:methods')
     loo=pd.concat([pd.read_csv(E/'primary17_leave_one_out.csv').assign(universe='17 industries'),pd.read_csv(E/'countries_leave_one_out.csv').assign(universe='countries')]).round(4); loo.to_csv(O/'figure_A2_leave_one_out_source.csv',index=False)
