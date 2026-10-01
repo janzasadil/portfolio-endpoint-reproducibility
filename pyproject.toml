@@ -27,6 +27,7 @@ portfolio-report = "portfolio_endpoint.reporting:main"
 portfolio-countries = "portfolio_endpoint.countries:main"
 portfolio-extension = "portfolio_endpoint.extension:main"
 portfolio-country-bootstrap-report = "portfolio_endpoint.country_bootstrap_report:main"
+portfolio-frl-publication = "portfolio_endpoint.frl_publication:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
