@@ -60,9 +60,21 @@ def main():
     # Appendix Figure A3: descriptive endpoint-displacement design points.
     fig,ax=plt.subplots(figsize=(6.5,3.8),constrained_layout=True)
     figure2=disp.loc[disp['Sample']=='full_eligible',['Universe','h (months)','Mean loss (bp)']].copy()
+    # The definitive primary bootstrap retained the three horizon-specific
+    # draws.  The country run retained only its baseline (12-month) draws.
+    primary_draws=pd.read_csv(R/'primary_17_definitive_B2000/outer_bootstrap.csv')
+    primary_columns={6:'h6_mean_endpoint_loss',12:'baseline_mean_endpoint_loss',24:'h24_mean_endpoint_loss'}
+    primary_intervals={h:(10000*primary_draws[column].quantile(.025),10000*primary_draws[column].quantile(.975)) for h,column in primary_columns.items()}
+    figure2['CI low (bp)']=pd.NA; figure2['CI high (bp)']=pd.NA
+    for h,(low,high) in primary_intervals.items():
+        mask=(figure2['Universe']=='17 U.S. industries') & (figure2['h (months)']==h)
+        figure2.loc[mask,['CI low (bp)','CI high (bp)']]=low,high
     label_offsets={'17 U.S. industries':-0.32,'14 developed-country markets':0.28}
     for universe,g in figure2.groupby('Universe',sort=False):
         g=g.sort_values('h (months)'); line=ax.plot(g['h (months)'],g['Mean loss (bp)'],marker='o',linewidth=2)[0]
+        if universe=='17 U.S. industries':
+            low=g['CI low (bp)'].astype(float); high=g['CI high (bp)'].astype(float)
+            ax.errorbar(g['h (months)'],g['Mean loss (bp)'],yerr=[g['Mean loss (bp)']-low,high-g['Mean loss (bp)']],fmt='none',ecolor=line.get_color(),capsize=3,alpha=.8)
         ax.annotate(universe,xy=(24,g['Mean loss (bp)'].iloc[-1]),xytext=(7,label_offsets[universe]),textcoords='offset points',va='center',color=line.get_color(),fontsize=9)
     ax.set(xlabel='Endpoint displacement (months)',ylabel='Mean endpoint loss (CEQ bp)',xticks=[6,12,24])
     fig.savefig(O/'figure_A3_endpoint_displacement.pdf'); fig.savefig(O/'figure_A3_endpoint_displacement.png',dpi=220); plt.close(fig)
@@ -117,5 +129,5 @@ def main():
     methods=pd.DataFrame([['Equal weight','None','Equal weights','Long-only, fully invested','60 months','Monthly'],['Sample GMV','Sample covariance','Minimum variance','Long-only, fully invested','60 months','Monthly'],['Ledoit--Wolf GMV','Shrinkage covariance','Minimum variance','Long-only, fully invested','60 months','Monthly'],['Inverse volatility','Sample volatility','Inverse volatility weights','Long-only, fully invested','60 months','Monthly'],['ERC','Sample covariance','Equal risk contributions','Long-only, fully invested','60 months','Monthly']],columns=['Method','Risk input','Rule/objective','Constraints','Lookback','Rebalance'])
     datasets=pd.DataFrame([['17 U.S. industries',17,'Kenneth French','1926-07--2026-07','1931-07',84,75,'USD'],['14 developed-country markets',14,'Kenneth French international','1975-01--2025-12','1980-01',36,27,'USD'],['30 U.S. industries',30,'Kenneth French','1926-07--2026-07','1931-07',84,75,'USD']],columns=['Universe','Assets','Source','Sample','OOS start','Endpoint pairs','Ex-ante dates','Currency'])
     methods.to_csv(O/'table_A5_panel_A_methods.csv',index=False); datasets.to_csv(O/'table_A5_panel_B_data.csv',index=False); tex(methods,O/'table_A5_panel_A_methods.tex','Portfolio methods and sample construction: methods','tab:methods-reference'); tex(datasets,O/'table_A5_panel_B_data.tex','Portfolio methods and sample construction: datasets','tab:data-reference')
-    (O/'README.md').write_text('# Lean FRL bundle\n\nMain text: Table 1, Figure 1 (censored-KM winner durability), and Table 2. Appendix Figure A3 gives the descriptive endpoint-displacement profile; connecting segments are guides between the three prespecified design points, not a fitted functional relationship. Appendix Table A1 labels complete-follow-up survival separately from full Kaplan--Meier medians. The margin diagnostic remains a reproducibility artifact under results/extension.\n',encoding='utf8')
+    (O/'README.md').write_text('# Lean FRL bundle\n\nMain text: Table 1, Figure 1 (censored-KM winner durability), and Table 2. Appendix Figure A3 gives the endpoint-displacement profile; connecting segments are guides between the three prespecified design points, not a fitted functional relationship. Its industry error bars are 95% stationary-bootstrap percentile intervals from the saved B=2000 horizon-specific draws. The country run saved bootstrap draws only for h=12, so its h=6 and h=24 points are intentionally shown without non-comparable intervals. Appendix Table A1 labels complete-follow-up survival separately from full Kaplan--Meier medians. The margin diagnostic remains a reproducibility artifact under results/extension.\n',encoding='utf8')
 if __name__=='__main__': main()
