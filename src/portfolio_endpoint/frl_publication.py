@@ -33,14 +33,20 @@ def main():
     axs[0].set_ylabel('First-failure survival'); fig.savefig(O/'figure_1_winner_durability.pdf'); fig.savefig(O/'figure_1_winner_durability.png',dpi=220); plt.close(fig)
     # Lean appendix objects.
     sens=pd.read_csv(E/'primary17_gamma_cost_sensitivity.csv'); mat=pd.read_csv(E/'materiality_threshold_sensitivity.csv')
-    a1a=sens[['setting','mean_endpoint_loss','median_endpoint_loss','literal_switch_frequency','loss_exceeds_25bp_frequency','survival_12_complete_followup','survival_24_complete_followup','median_survival_months_full_km']].round(4)
-    a1a.columns=['Setting','Mean loss','Median loss','Switching','Loss >25 bp','S(12)','S(24)','Median survival (months)']
+    a1a=sens[['setting','mean_endpoint_loss','median_endpoint_loss','literal_switch_frequency','loss_exceeds_25bp_frequency','survival_12_complete_followup','survival_24_complete_followup','median_survival_months_full_km']].copy()
+    for col in ['mean_endpoint_loss','median_endpoint_loss']: a1a[col]*=10000
+    for col in ['literal_switch_frequency','loss_exceeds_25bp_frequency','survival_12_complete_followup','survival_24_complete_followup']: a1a[col]*=100
+    a1a=a1a.round(2); a1a.columns=['Setting','Mean loss (bp)','Median loss (bp)','Switching (%)','Loss >25 bp (%)','S(12) (%)','S(24) (%)','Median survival (months)']
     a1b=mat[['universe','threshold_bp','survival_12_complete_followup','survival_24_complete_followup','median_survival_months_full_km']].round(4)
     a1b.columns=['Universe','Threshold (bp)','S(12)','S(24)','Median survival (months)']
     a1a.to_csv(O/'table_A1_panel_A_specification_sensitivity.csv',index=False); a1b.to_csv(O/'table_A1_panel_B_materiality_thresholds.csv',index=False)
     tex(a1a,O/'table_A1_panel_A_specification_sensitivity.tex','Robustness summary: specification sensitivity','tab:robustness-specification'); tex(a1b,O/'table_A1_panel_B_materiality_thresholds.tex','Robustness summary: materiality thresholds','tab:robustness-materiality')
-    disp=pd.concat([pd.read_csv(E/'primary17_displacement.csv').assign(universe='17 industries'),pd.read_csv(E/'countries_displacement.csv').assign(universe='countries')]).round(4); disp.to_csv(O/'table_A2_displacement_granularity.csv',index=False); tex(disp,O/'table_A2_displacement_granularity.tex','Endpoint displacement and granularity','tab:displacement')
-    a3=pd.concat([pd.read_csv(E/'primary17_winner_conditioned.csv').assign(universe='17 industries'),pd.read_csv(E/'countries_winner_conditioned.csv').assign(universe='countries')]).round(4); a3.to_csv(O/'table_A3_method_diagnostics.csv',index=False); tex(a3,O/'table_A3_method_diagnostics.tex','Method-conditioned outcomes','tab:methods')
+    disp=pd.concat([pd.read_csv(E/'primary17_displacement.csv').assign(universe='17 industries'),pd.read_csv(E/'countries_displacement.csv').assign(universe='countries')]).copy()
+    for col in ['mean_endpoint_loss','median_endpoint_loss','p75_endpoint_loss','p90_endpoint_loss']: disp[col]*=10000
+    for col in ['literal_switch_frequency','loss_exceeds_25bp_frequency']: disp[col]*=100
+    disp=disp[['universe','h','sample','mean_endpoint_loss','p90_endpoint_loss','literal_switch_frequency','loss_exceeds_25bp_frequency','n_origins']].round(2)
+    disp.columns=['Universe','h (months)','Sample','Mean loss (bp)','P90 (bp)','Switching (%)','Loss >25 bp (%)','n']; disp.to_csv(O/'table_A2_displacement_granularity.csv',index=False); tex(disp,O/'table_A2_displacement_granularity.tex','Endpoint displacement and granularity','tab:displacement')
+    a3=pd.concat([pd.read_csv(E/'primary17_winner_conditioned.csv').assign(universe='17 industries'),pd.read_csv(E/'countries_winner_conditioned.csv').assign(universe='countries')]).copy(); a3['mean_endpoint_loss']*=10000; a3['switch_frequency']*=100; a3['loss_exceeds_25bp']*=100; a3=a3.round(2); a3.columns=['Winner','Origins','Switching (%)','Mean loss (bp)','Median loss','Loss >25 bp (%)','Universe']; a3.to_csv(O/'table_A3_method_diagnostics.csv',index=False); tex(a3,O/'table_A3_method_diagnostics.tex','Method-conditioned outcomes','tab:methods')
     loo=pd.concat([pd.read_csv(E/'primary17_leave_one_out.csv').assign(universe='17 industries'),pd.read_csv(E/'countries_leave_one_out.csv').assign(universe='countries')]).round(4); loo.to_csv(O/'figure_A2_leave_one_out_source.csv',index=False)
     fig,axs=plt.subplots(1,2,figsize=(10,3.8),constrained_layout=True)
     for ax,(u,g) in zip(axs,loo.groupby('universe')): ax.bar(g.omitted_asset,10000*g.mean_endpoint_loss); ax.tick_params(axis='x',rotation=70,labelsize=7); ax.set(title=u,ylabel='Mean endpoint loss (bp)')
