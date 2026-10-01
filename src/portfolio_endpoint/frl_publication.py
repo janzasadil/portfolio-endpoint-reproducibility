@@ -20,7 +20,7 @@ def curve(audit): return kaplan_meier(audit.rename(columns={'survival_duration_m
 def main():
     root=project_root(); R=root/'results'; D=R/'diagnostics'; E=R/'extension'; C=R/'country_replication_B1000'; O=R/'publication_frl'; O.mkdir(parents=True,exist_ok=True)
     # Remove names superseded by the consolidated appendix objects on reruns.
-    for stale in ['figure_A1_transition_14.pdf','figure_A1_transition_17.pdf','figure_2_endpoint_displacement.pdf','figure_2_endpoint_displacement.png','figure_2_endpoint_displacement_source.csv','table_A4_bootstrap_audit.csv','table_A4_bootstrap_audit.tex']:
+    for stale in ['figure_A1_transition_14.pdf','figure_A1_transition_17.pdf','figure_2_endpoint_displacement.pdf','figure_2_endpoint_displacement.png','figure_2_endpoint_displacement_source.csv','table_A2_displacement_granularity.csv','table_A2_displacement_granularity.tex','table_A4_bootstrap_audit.csv','table_A4_bootstrap_audit.tex']:
         (O/stale).unlink(missing_ok=True)
     p=json.loads((R/'primary_17_definitive_B2000/summary.json').read_text()); pi=json.loads((R/'primary_17_definitive_B2000/outer_bootstrap_intervals.json').read_text()); c=json.loads((C/'summary.json').read_text()); ci=json.loads((C/'outer_bootstrap_intervals.json').read_text())
     t1=pd.DataFrame([['Endpoint pairs',84,36],['Mean endpoint loss (bp)',f'{bp(p["mean_endpoint_loss"]):.2f}',f'{bp(c["mean_endpoint_loss"]):.2f}'],['95% bootstrap CI (bp)',f'[{bp(pi["baseline_mean_endpoint_loss"][0]):.2f}, {bp(pi["baseline_mean_endpoint_loss"][1]):.2f}]',f'[{bp(ci["mean_endpoint_loss"][0]):.2f}, {bp(ci["mean_endpoint_loss"][1]):.2f}]'],['Median (bp)','0.00','0.00'],['P75 (bp)',f'{bp(p["p75_endpoint_loss"]):.2f}',f'{bp(c["p75_endpoint_loss"]):.2f}'],['P90 (bp)',f'{bp(p["p90_endpoint_loss"]):.2f}',f'{bp(c["p90_endpoint_loss"]):.2f}'],['Literal switching',f'{pct(p["literal_switch_frequency"]):.1f}%',f'{pct(c["literal_switch_frequency"]):.1f}%']],columns=['Metric','17 U.S. industries','14 developed-country markets'])
@@ -56,7 +56,7 @@ def main():
     for col in ['mean_endpoint_loss','median_endpoint_loss','p75_endpoint_loss','p90_endpoint_loss']: disp[col]*=10000
     for col in ['literal_switch_frequency','loss_exceeds_25bp_frequency']: disp[col]*=100
     disp=disp[['universe','h','sample','mean_endpoint_loss','p90_endpoint_loss','literal_switch_frequency','loss_exceeds_25bp_frequency','n_origins']].round(2)
-    disp.columns=['Universe','h (months)','Sample','Mean loss (bp)','P90 (bp)','Switching (%)','Loss >25 bp (%)','n']; disp.to_csv(O/'table_A2_displacement_granularity.csv',index=False)
+    disp.columns=['Universe','h (months)','Sample','Mean loss (bp)','P90 (bp)','Switching (%)','Loss >25 bp (%)','n']; disp.to_csv(O/'source_A2_displacement_all.csv',index=False)
     # Appendix Figure A3: descriptive endpoint-displacement design points.
     fig,ax=plt.subplots(figsize=(5.3,3.8),constrained_layout=True)
     figure2=disp.loc[(disp['Sample']=='full_eligible') & (disp['Universe']=='17 U.S. industries'),['Universe','h (months)','Mean loss (bp)']].copy()
