@@ -20,7 +20,7 @@ def curve(audit): return kaplan_meier(audit.rename(columns={'survival_duration_m
 def main():
     root=project_root(); R=root/'results'; D=R/'diagnostics'; E=R/'extension'; C=R/'country_replication_B1000'; O=R/'publication_frl'; O.mkdir(parents=True,exist_ok=True)
     # Remove names superseded by the consolidated appendix objects on reruns.
-    for stale in ['figure_A1_transition_14.pdf','figure_A1_transition_17.pdf','figure_2_endpoint_displacement.pdf','figure_2_endpoint_displacement.png','figure_2_endpoint_displacement_source.csv','table_A2_displacement_granularity.csv','table_A2_displacement_granularity.tex','table_A4_bootstrap_audit.csv','table_A4_bootstrap_audit.tex']:
+    for stale in ['figure_A1_transition_14.pdf','figure_A1_transition_17.pdf','figure_A3_endpoint_displacement.pdf','figure_A3_endpoint_displacement.png','figure_A3_endpoint_displacement_source.csv','table_A2_displacement_granularity.csv','table_A2_displacement_granularity.tex','table_A4_bootstrap_audit.csv','table_A4_bootstrap_audit.tex']:
         (O/stale).unlink(missing_ok=True)
     p=json.loads((R/'primary_17_definitive_B2000/summary.json').read_text()); pi=json.loads((R/'primary_17_definitive_B2000/outer_bootstrap_intervals.json').read_text()); c=json.loads((C/'summary.json').read_text()); ci=json.loads((C/'outer_bootstrap_intervals.json').read_text())
     t1=pd.DataFrame([['Endpoint pairs',84,36],['Mean endpoint loss (bp)',f'{bp(p["mean_endpoint_loss"]):.2f}',f'{bp(c["mean_endpoint_loss"]):.2f}'],['95% bootstrap CI (bp)',f'[{bp(pi["baseline_mean_endpoint_loss"][0]):.2f}, {bp(pi["baseline_mean_endpoint_loss"][1]):.2f}]',f'[{bp(ci["mean_endpoint_loss"][0]):.2f}, {bp(ci["mean_endpoint_loss"][1]):.2f}]'],['Median (bp)','0.00','0.00'],['P75 (bp)',f'{bp(p["p75_endpoint_loss"]):.2f}',f'{bp(c["p75_endpoint_loss"]):.2f}'],['P90 (bp)',f'{bp(p["p90_endpoint_loss"]):.2f}',f'{bp(c["p90_endpoint_loss"]):.2f}'],['Literal switching',f'{pct(p["literal_switch_frequency"]):.1f}%',f'{pct(c["literal_switch_frequency"]):.1f}%']],columns=['Metric','17 U.S. industries','14 developed-country markets'])
@@ -57,31 +57,21 @@ def main():
     for col in ['literal_switch_frequency','loss_exceeds_25bp_frequency']: disp[col]*=100
     disp=disp[['universe','h','sample','mean_endpoint_loss','p90_endpoint_loss','literal_switch_frequency','loss_exceeds_25bp_frequency','n_origins']].round(2)
     disp.columns=['Universe','h (months)','Sample','Mean loss (bp)','P90 (bp)','Switching (%)','Loss >25 bp (%)','n']; disp.to_csv(O/'source_A2_displacement_all.csv',index=False)
-    # Appendix Figure A3: descriptive endpoint-displacement design points.
-    fig,ax=plt.subplots(figsize=(5.3,3.8),constrained_layout=True)
-    figure2=disp.loc[(disp['Sample']=='full_eligible') & (disp['Universe']=='17 U.S. industries'),['Universe','h (months)','Mean loss (bp)']].copy()
-    # The definitive primary bootstrap retained the three horizon-specific
-    # draws.  The country run retained only its baseline (12-month) draws.
+    # Main Figure 2: descriptive profiles at the three prespecified horizons.
+    figure2=disp.loc[disp['Sample']=='full_eligible',['Universe','h (months)','Mean loss (bp)']].copy()
+    fig,ax=plt.subplots(figsize=(6.5,3.8),constrained_layout=True)
+    colors={'17 U.S. industries':'tab:blue','14 developed-country markets':'tab:orange'}
+    for universe,g in figure2.groupby('Universe',sort=False):
+        g=g.sort_values('h (months)'); line=ax.plot(g['h (months)'],g['Mean loss (bp)'],marker='o',linewidth=2,color=colors[universe])[0]
+        ax.annotate(universe,xy=(24,g['Mean loss (bp)'].iloc[-1]),xytext=(7,0),textcoords='offset points',va='center',color=line.get_color(),fontsize=9)
+    ax.set(xlabel='Endpoint displacement (months)',ylabel='Mean endpoint loss (CEQ bp)',xticks=[6,12,24])
+    fig.savefig(O/'figure_2_endpoint_displacement.pdf'); fig.savefig(O/'figure_2_endpoint_displacement.png',dpi=220); plt.close(fig)
+    figure2.to_csv(O/'figure_2_endpoint_displacement_source.csv',index=False)
+    # Retain the paired primary horizon intervals as an inference table, not
+    # unequal visual ornamentation on the two-universe descriptive profile.
     primary_draws=pd.read_csv(R/'primary_17_definitive_B2000/outer_bootstrap.csv')
     primary_columns={6:'h6_mean_endpoint_loss',12:'baseline_mean_endpoint_loss',24:'h24_mean_endpoint_loss'}
     primary_intervals={h:(10000*primary_draws[column].quantile(.025),10000*primary_draws[column].quantile(.975)) for h,column in primary_columns.items()}
-    figure2['CI low (bp)']=pd.NA; figure2['CI high (bp)']=pd.NA
-    for h,(low,high) in primary_intervals.items():
-        mask=(figure2['Universe']=='17 U.S. industries') & (figure2['h (months)']==h)
-        figure2.loc[mask,['CI low (bp)','CI high (bp)']]=low,high
-    offsets={'17 U.S. industries':0}
-    for universe,g in figure2.groupby('Universe',sort=False):
-        g=g.sort_values('h (months)'); color='tab:blue'
-        x=g['h (months)']+offsets[universe]
-        low=g['CI low (bp)'].astype(float); high=g['CI high (bp)'].astype(float)
-        ax.errorbar(x,g['Mean loss (bp)'],yerr=[g['Mean loss (bp)']-low,high-g['Mean loss (bp)']],fmt='o',color=color,ecolor=color,capsize=3,label=universe)
-        for horizon,estimate,lo,hi in zip(x,g['Mean loss (bp)'],low,high):
-            offset=(-70,4) if horizon==24 else (7,4)
-            ax.annotate(f'{estimate:.2f}\n[{lo:.2f}, {hi:.2f}]',xy=(horizon,estimate),xytext=offset,textcoords='offset points',fontsize=8,va='bottom',ha='right' if horizon==24 else 'left')
-    ax.set(xlabel='Endpoint displacement (months)',ylabel='Mean endpoint loss (CEQ bp)',xticks=[6,12,24])
-    ax.text(.02,.98,'Points: mean loss; whiskers: 95% stationary-bootstrap CI (B=2,000)',transform=ax.transAxes,ha='left',va='top',fontsize=8)
-    fig.savefig(O/'figure_A3_endpoint_displacement.pdf'); fig.savefig(O/'figure_A3_endpoint_displacement.png',dpi=220); plt.close(fig)
-    figure2.to_csv(O/'figure_A3_endpoint_displacement_source.csv',index=False)
     for sample,title,stem in [('full_eligible','Endpoint displacement: full eligible origins','table_A2_panel_A_full'),('common_calendar_origins','Endpoint displacement: common calendar origins','table_A2_panel_B_common')]:
         q=disp.loc[disp.Sample==sample].drop(columns='Sample'); q.to_csv(O/f'{stem}.csv',index=False); tex(q,O/f'{stem}.tex',title,f'tab:{stem}')
     s30=json.loads((R/'replication_30_B1000/summary.json').read_text()); i30=json.loads((R/'replication_30_B1000/outer_bootstrap_intervals.json').read_text()); q30=pd.DataFrame([['30 U.S. industries',f'{bp(s30["mean_endpoint_loss"]):.2f}',f'[{bp(i30["mean_endpoint_loss"][0]):.2f}, {bp(i30["mean_endpoint_loss"][1]):.2f}]',f'{pct(s30["literal_switch_frequency"]):.1f}%',s30['median_survival_months']]])
@@ -95,6 +85,7 @@ def main():
     loo['influence_shift_bp']=loo.apply(lambda x:10000*(x['mean_endpoint_loss']-full_losses[x['universe']]),axis=1)
     loo.to_csv(O/'figure_A2_leave_one_out_source.csv',index=False)
     fig,axs=plt.subplots(1,2,figsize=(10,5),constrained_layout=True)
+    fig.suptitle('Leave-one-out sensitivity of mean endpoint loss')
     for ax,(u,g) in zip(axs,loo.groupby('universe')): ax.plot(g.influence_shift_bp,range(len(g)),'o'); ax.axvline(0,ls='--',color='black'); ax.set(title='17 U.S. industries' if u=='17 industries' else '14 developed-country markets',yticks=range(len(g)),yticklabels=g.omitted_asset,xlabel='Change in mean endpoint loss (bp)')
     fig.savefig(O/'figure_A2_leave_one_out.pdf'); fig.savefig(O/'figure_A2_leave_one_out.png',dpi=220); plt.close(fig)
     # A4 panel A: endpoint inference under each resampling law.
@@ -113,6 +104,8 @@ def main():
     a4b['Estimate']=a4b.apply(lambda x:f"{x.point_estimate:.2f}",axis=1); a4b['95% CI']=a4b.apply(lambda x:f"[{x.ci_low:.2f}, {x.ci_high:.2f}]",axis=1)
     a4b=a4b[['metric','Estimate','95% CI','unit','bootstrap_replications']]; a4b.columns=['Country statistic','Estimate','95% CI','Unit','B']
     a4b.to_csv(O/'table_A4_panel_B_country_secondary.csv',index=False); tex(a4b,O/'table_A4_panel_B_country_secondary.tex','Bootstrap audit: country secondary outcomes','tab:bootstrap-country')
+    a4c=pd.DataFrame([[h,figure2.loc[(figure2['Universe']=='17 U.S. industries') & (figure2['h (months)']==h),'Mean loss (bp)'].iloc[0],f'[{low:.2f}, {high:.2f}]'] for h,(low,high) in primary_intervals.items()],columns=['Displacement (months)','Endpoint loss (CEQ bp)','95% CI (bp)']).round(2)
+    a4c.to_csv(O/'table_A4_panel_C_primary_displacement_intervals.csv',index=False); tex(a4c,O/'table_A4_panel_C_primary_displacement_intervals.tex','Bootstrap audit: primary endpoint-displacement intervals','tab:bootstrap-displacement')
     # Figure A1: two transition matrices, directly comparable on a 0--100 scale.
     matrices=[]
     for name,file,winner_file in [('17 U.S. industries',E/'primary17_transition_row_percent.csv',E/'primary17_winner_conditioned.csv'),('14 developed-country markets',E/'countries_transition_row_percent.csv',E/'countries_winner_conditioned.csv')]:
@@ -132,5 +125,6 @@ def main():
     methods=pd.DataFrame([['Equal weight','None','Equal weights','Long-only, fully invested','60 months','Monthly'],['Sample GMV','Sample covariance','Minimum variance','Long-only, fully invested','60 months','Monthly'],['Ledoit--Wolf GMV','Shrinkage covariance','Minimum variance','Long-only, fully invested','60 months','Monthly'],['Inverse volatility','Sample volatility','Inverse volatility weights','Long-only, fully invested','60 months','Monthly'],['ERC','Sample covariance','Equal risk contributions','Long-only, fully invested','60 months','Monthly']],columns=['Method','Risk input','Rule/objective','Constraints','Lookback','Rebalance'])
     datasets=pd.DataFrame([['17 U.S. industries',17,'Kenneth French','1926-07--2026-07','1931-07',84,75,'USD'],['14 developed-country markets',14,'Kenneth French international','1975-01--2025-12','1980-01',36,27,'USD'],['30 U.S. industries',30,'Kenneth French','1926-07--2026-07','1931-07',84,75,'USD']],columns=['Universe','Assets','Source','Sample','OOS start','Endpoint pairs','Ex-ante dates','Currency'])
     methods.to_csv(O/'table_A5_panel_A_methods.csv',index=False); datasets.to_csv(O/'table_A5_panel_B_data.csv',index=False); tex(methods,O/'table_A5_panel_A_methods.tex','Portfolio methods and sample construction: methods','tab:methods-reference'); tex(datasets,O/'table_A5_panel_B_data.tex','Portfolio methods and sample construction: datasets','tab:data-reference')
-    (O/'README.md').write_text('# Lean FRL bundle\n\nMain text: Table 1, Figure 1 (censored-KM winner durability), and Table 2. Appendix Figure A3 is a primary-universe point-range display of the three prespecified endpoint-displacement estimands; it does not imply a fitted continuous relationship. Error bars are 95% stationary-bootstrap percentile intervals from the saved B=2000 horizon-specific draws. The 14-country h=6/12/24 estimates remain in Appendix Table A2 as descriptive replication evidence because their horizon-specific bootstrap draws were not retained. Appendix Table A1 labels complete-follow-up survival separately from full Kaplan--Meier medians. The margin diagnostic remains a reproducibility artifact under results/extension.\n',encoding='utf8')
+    (O/'README.md').write_text('# Lean FRL bundle\n\nMain text: Table 1, Figure 1 (censored-KM winner durability), Figure 2 (endpoint-displacement profiles), and Table 2. Appendix Table A4 Panel C reports the primary h=6/12/24 bootstrap intervals. Appendix Table A1 labels complete-follow-up survival separately from full Kaplan--Meier medians.\n',encoding='utf8')
+    (O/'FIGURE_NOTES.md').write_text('# Figure captions and notes\n\n## Figure 2. Endpoint-displacement profiles\n\nPoints are deterministic mean endpoint losses at the prespecified displacement horizons. Lines connect the three reported horizons for visual guidance only; no functional form or monotonicity is estimated.\n\n## Figure A2. Leave-one-out sensitivity of mean endpoint loss\n\nEach point is the change in mean endpoint loss when the named asset is omitted, relative to the full universe. Removing an asset changes both portfolio composition and cross-sectional dimension; values are sensitivity diagnostics, not asset-specific causal contributions.\n',encoding='utf8')
 if __name__=='__main__': main()
