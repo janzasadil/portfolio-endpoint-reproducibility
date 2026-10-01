@@ -72,9 +72,9 @@ def main():
     fig,ax=plt.subplots(figsize=(6.5,3.8),constrained_layout=True)
     colors={'17 U.S. industries':'tab:blue','14 developed-country markets':'tab:orange'}
     for universe,g in figure2.groupby('Universe',sort=False):
-        g=g.sort_values('h (months)'); line=ax.plot(g['h (months)'],g['Mean loss (bp)'],marker='o',linewidth=2,color=colors[universe])[0]
-        ax.annotate(universe,xy=(24,g['Mean loss (bp)'].iloc[-1]),xytext=(7,0),textcoords='offset points',va='center',color=line.get_color(),fontsize=9)
+        g=g.sort_values('h (months)'); ax.plot(g['h (months)'],g['Mean loss (bp)'],marker='o',linewidth=2,color=colors[universe],label=universe)
     ax.set(xlabel='Endpoint displacement (months)',ylabel='Mean endpoint loss (CEQ bp)',xticks=[6,12,24])
+    ax.legend(frameon=False,loc='upper left')
     fig.savefig(O/'figure_2_endpoint_displacement.pdf'); fig.savefig(O/'figure_2_endpoint_displacement.png',dpi=220); plt.close(fig)
     figure2.to_csv(O/'figure_2_endpoint_displacement_source.csv',index=False)
     # Retain the paired primary horizon intervals as an inference table, not
