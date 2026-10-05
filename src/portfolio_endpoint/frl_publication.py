@@ -45,7 +45,7 @@ def main():
     for ax,(title,l,m) in zip(axs,specs):
         for label,path in [('Literal',l),('Material >25 bp',m)]:
             q=curve(pd.read_csv(path)); line=ax.step([0,*q.time_months],[1,*q.survival],where='post',label='Material (>25 bp)' if label.startswith('Material') else label); handles.extend(line if not handles else [])
-        ax.set_title(title); ax.set(xlabel='Months since December origin',xlim=(0,150),ylim=(0,1.02))
+        ax.set_title(title); ax.set(xlabel='Months since initial terminal date',xlim=(0,150),ylim=(0,1.02))
     axs[0].set_ylabel('Kaplan--Meier survival probability'); h,l=axs[0].get_legend_handles_labels(); fig.legend(h,l,loc='upper center',bbox_to_anchor=(.5,.995),ncol=2,frameon=False); fig.savefig(O/'figure_1_winner_durability.pdf'); fig.savefig(O/'figure_1_winner_durability.png',dpi=220); plt.close(fig)
     # Lean appendix objects.
     sens=pd.read_csv(E/'primary17_gamma_cost_sensitivity.csv'); mat=pd.read_csv(E/'materiality_threshold_sensitivity.csv')
@@ -105,7 +105,7 @@ def main():
     loo=pd.concat([pd.read_csv(E/'primary17_leave_one_out.csv').assign(universe='17 industries'),pd.read_csv(E/'countries_leave_one_out.csv').assign(universe='countries')])
     full_losses={'17 industries':p['mean_endpoint_loss'],'countries':c['mean_endpoint_loss']}
     loo['influence_shift_bp']=loo.apply(lambda x:10000*(x['mean_endpoint_loss']-full_losses[x['universe']]),axis=1)
-    loo_labels={'Clths':'Apparel','Durbl':'Durables','Cnsum':'Consumer goods','Cnstr':'Construction','FabPr':'Fabricated products','Machn':'Machinery','Trans':'Transport','Utils':'Utilities','Rtail':'Retail','Finan':'Finance'}
+    loo_labels={'Clths':'Apparel','Durbl':'Durables','Chems':'Chemicals','Cnsum':'Consumer goods','Cnstr':'Construction','FabPr':'Fabricated products','Machn':'Machinery','Trans':'Transport','Utils':'Utilities','Rtail':'Retail','Finan':'Finance'}
     loo['display_asset']=loo.omitted_asset.replace(loo_labels)
     loo.to_csv(O/'figure_A2_leave_one_out_source.csv',index=False)
     fig,axs=plt.subplots(1,2,figsize=(10,5),constrained_layout=True)
