@@ -40,13 +40,13 @@ def main():
     t2.to_csv(O/'table_2.csv',index=False); tex(t2,O/'table_2.tex','Ex-ante recoverability','tab:recoverability','lcc')
     fig,axs=plt.subplots(1,2,figsize=(9,3.5),sharey=True)
     fig.subplots_adjust(left=.08,right=.99,bottom=.18,top=.80,wspace=.035)
-    specs=[('17 U.S. industries',D/'survival_origin_audit_17_baseline.csv',D/'material_origin_audit_17_baseline.csv'),('14 developed-country markets',E/'countries_literal_origin_audit.csv',E/'countries_material25_origin_audit.csv')]
+    specs=[('17 industries',D/'survival_origin_audit_17_baseline.csv',D/'material_origin_audit_17_baseline.csv'),('14 countries',E/'countries_literal_origin_audit.csv',E/'countries_material25_origin_audit.csv')]
     handles=[]
     for ax,(title,l,m) in zip(axs,specs):
         for label,path in [('Literal',l),('Material >25 bp',m)]:
             q=curve(pd.read_csv(path)); line=ax.step([0,*q.time_months],[1,*q.survival],where='post',label='Material (>25 bp)' if label.startswith('Material') else label); handles.extend(line if not handles else [])
         ax.set_title(title); ax.set(xlabel='Months since December origin',xlim=(0,150),ylim=(0,1.02))
-    axs[0].set_ylabel('Censored-KM winner survival probability'); h,l=axs[0].get_legend_handles_labels(); fig.legend(h,l,loc='upper center',bbox_to_anchor=(.5,.995),ncol=2,frameon=False); fig.savefig(O/'figure_1_winner_durability.pdf'); fig.savefig(O/'figure_1_winner_durability.png',dpi=220); plt.close(fig)
+    axs[0].set_ylabel('Kaplan--Meier survival probability'); h,l=axs[0].get_legend_handles_labels(); fig.legend(h,l,loc='upper center',bbox_to_anchor=(.5,.995),ncol=2,frameon=False); fig.savefig(O/'figure_1_winner_durability.pdf'); fig.savefig(O/'figure_1_winner_durability.png',dpi=220); plt.close(fig)
     # Lean appendix objects.
     sens=pd.read_csv(E/'primary17_gamma_cost_sensitivity.csv'); mat=pd.read_csv(E/'materiality_threshold_sensitivity.csv')
     extra=[]
@@ -68,14 +68,20 @@ def main():
     for col in ['literal_switch_frequency','loss_exceeds_25bp_frequency']: disp[col]*=100
     disp=disp[['universe','h','sample','mean_endpoint_loss','p90_endpoint_loss','literal_switch_frequency','loss_exceeds_25bp_frequency','n_origins']].round(2)
     disp.columns=['Universe','h (months)','Sample','Mean loss (bp)','P90 (bp)','Switching (%)','Loss >25 bp (%)','n']; disp.to_csv(O/'source_A2_displacement_all.csv',index=False)
-    # Main Figure 2: descriptive profiles at the three prespecified horizons.
-    figure2=disp.loc[disp['Sample']=='full_eligible',['Universe','h (months)','Mean loss (bp)']].copy()
-    fig,ax=plt.subplots(figsize=(6.5,3.8),constrained_layout=True)
-    colors={'17 U.S. industries':'tab:blue','14 developed-country markets':'tab:orange'}
-    for universe,g in figure2.groupby('Universe',sort=False):
-        g=g.sort_values('h (months)'); ax.plot(g['h (months)'],g['Mean loss (bp)'],marker='o',linewidth=2,color=colors[universe],label=universe)
-    ax.set(xlabel='Endpoint displacement (months)',ylabel='Mean endpoint loss (CEQ bp)',xticks=[6,12,24])
-    ax.legend(frameon=False,loc='upper left')
+    # Figure 2: common-terminal-date displacement shares. It is descriptive;
+    # endpoint-loss levels and their primary bootstrap intervals remain in A4.
+    figure2_mean_loss=disp.loc[disp['Sample']=='full_eligible',['Universe','h (months)','Mean loss (bp)']].copy()
+    figure2=disp.loc[disp['Sample']=='common_calendar_origins',['Universe','h (months)','Switching (%)','Loss >25 bp (%)','n']].copy()
+    fig,axs=plt.subplots(1,2,figsize=(9,3.6),sharey=True)
+    fig.subplots_adjust(left=.09,right=.99,bottom=.19,top=.78,wspace=.035)
+    titles={'17 U.S. industries':'17 industries','14 developed-country markets':'14 countries'}
+    for ax,(universe,g) in zip(axs,figure2.groupby('Universe',sort=False)):
+        g=g.sort_values('h (months)')
+        ax.plot(g['h (months)'],g['Switching (%)'],marker='o',linewidth=2,label='Literal winner change')
+        ax.plot(g['h (months)'],g['Loss >25 bp (%)'],marker='o',linewidth=2,label='Material loss (>25 bp)')
+        ax.set(title=titles[universe],xlabel='Terminal-date displacement (months)',xticks=[6,12,24])
+    axs[0].set_ylabel('Share of terminal dates (%)')
+    h,l=axs[0].get_legend_handles_labels(); fig.legend(h,l,loc='upper center',bbox_to_anchor=(.5,.995),ncol=2,frameon=False)
     fig.savefig(O/'figure_2_endpoint_displacement.pdf'); fig.savefig(O/'figure_2_endpoint_displacement.png',dpi=220); plt.close(fig)
     figure2.to_csv(O/'figure_2_endpoint_displacement_source.csv',index=False)
     # Retain the paired primary horizon intervals as an inference table, not
@@ -99,10 +105,16 @@ def main():
     loo=pd.concat([pd.read_csv(E/'primary17_leave_one_out.csv').assign(universe='17 industries'),pd.read_csv(E/'countries_leave_one_out.csv').assign(universe='countries')])
     full_losses={'17 industries':p['mean_endpoint_loss'],'countries':c['mean_endpoint_loss']}
     loo['influence_shift_bp']=loo.apply(lambda x:10000*(x['mean_endpoint_loss']-full_losses[x['universe']]),axis=1)
+    loo_labels={'Clths':'Apparel','Durbl':'Durables','Cnsum':'Consumer goods','Cnstr':'Construction','FabPr':'Fabricated products','Machn':'Machinery','Trans':'Transport','Utils':'Utilities','Rtail':'Retail','Finan':'Finance'}
+    loo['display_asset']=loo.omitted_asset.replace(loo_labels)
     loo.to_csv(O/'figure_A2_leave_one_out_source.csv',index=False)
     fig,axs=plt.subplots(1,2,figsize=(10,5),constrained_layout=True)
-    fig.suptitle('Leave-one-out sensitivity of mean endpoint loss')
-    for ax,(u,g) in zip(axs,loo.groupby('universe')): ax.plot(g.influence_shift_bp,range(len(g)),'o'); ax.axvline(0,ls='--',color='black'); ax.set(title='17 U.S. industries' if u=='17 industries' else '14 developed-country markets',yticks=range(len(g)),yticklabels=g.omitted_asset,xlabel='Change in mean endpoint loss (bp)')
+    for ax,(u,g) in zip(axs,loo.groupby('universe',sort=False)):
+        g=g.sort_values('influence_shift_bp',ascending=False).reset_index(drop=True)
+        ax.plot(g.influence_shift_bp,range(len(g)),'o')
+        ax.axvline(0,ls='--',color='black')
+        ax.set(title='17 industries' if u=='17 industries' else '14 countries',yticks=range(len(g)),yticklabels=g.display_asset,xlabel='Change in mean endpoint loss (bp)')
+        ax.invert_yaxis()
     fig.savefig(O/'figure_A2_leave_one_out.pdf'); fig.savefig(O/'figure_A2_leave_one_out.png',dpi=220); plt.close(fig)
     # A4 panel A: endpoint inference under each resampling law.
     bootstrap_rows=[]
@@ -121,12 +133,12 @@ def main():
     a4b['Estimate']=a4b.apply(lambda x:f"{x.point_estimate:.1f}%" if x.unit=='%' else f"{x.point_estimate:.2f}",axis=1); a4b['95% CI']=a4b.apply(lambda x:f"[{x.ci_low:.1f}%, {x.ci_high:.1f}%]" if x.unit=='%' else f"[{x.ci_low:.2f}, {x.ci_high:.2f}]",axis=1)
     a4b['metric']=a4b.apply(lambda x:f"{x.metric} (%)" if x.unit=='%' else x.metric,axis=1); a4b=a4b[['metric','Estimate','95% CI']]; a4b.columns=['Country statistic','Estimate','95% CI']
     a4b.to_csv(O/'table_A4_panel_B_country_secondary.csv',index=False)
-    a4c=pd.DataFrame([[h,figure2.loc[(figure2['Universe']=='17 U.S. industries') & (figure2['h (months)']==h),'Mean loss (bp)'].iloc[0],f'[{low:.2f}, {high:.2f}]'] for h,(low,high) in primary_intervals.items()],columns=['Displacement (months)','Endpoint loss (CEQ bp)','95% CI (bp)']).round(2)
+    a4c=pd.DataFrame([[h,figure2_mean_loss.loc[(figure2_mean_loss['Universe']=='17 U.S. industries') & (figure2_mean_loss['h (months)']==h),'Mean loss (bp)'].iloc[0],f'[{low:.2f}, {high:.2f}]'] for h,(low,high) in primary_intervals.items()],columns=['Displacement (months)','Endpoint loss (CEQ bp)','95% CI (bp)']).round(2)
     a4c.to_csv(O/'table_A4_panel_C_primary_displacement_intervals.csv',index=False)
     parent_table(O/'table_A4.tex','Bootstrap inference audit','tab:bootstrap',[('Panel A. Endpoint-loss inference',tabular(a4a)),('Panel B. Primary-universe endpoint-displacement inference',tabular(a4c)),('Panel C. Country secondary outcomes (all intervals use B=1,000 stationary-bootstrap replications)',tabular(a4b))])
     # Figure A1: two transition matrices, directly comparable on a 0--100 scale.
     matrices=[]
-    for name,file,winner_file in [('17 U.S. industries',E/'primary17_transition_row_percent.csv',E/'primary17_winner_conditioned.csv'),('14 developed-country markets',E/'countries_transition_row_percent.csv',E/'countries_winner_conditioned.csv')]:
+    for name,file,winner_file in [('17 industries',E/'primary17_transition_row_percent.csv',E/'primary17_winner_conditioned.csv'),('14 countries',E/'countries_transition_row_percent.csv',E/'countries_winner_conditioned.csv')]:
         q=pd.read_csv(file,index_col=0).reindex(index=labels,columns=labels)
         counts=pd.read_csv(winner_file).set_index('original_winner')['n_origins'].reindex(labels).fillna(0).astype(int)
         matrices.append((name,q,counts))
@@ -137,13 +149,13 @@ def main():
             for j in range(5):
                 cell='--' if pd.isna(q.iloc[i,j]) else f'{values[i,j]:.0f}'
                 ax.text(j,i,cell,ha='center',va='center',fontsize=8,color='white' if values[i,j]>=55 else 'black')
-        ax.set(title=name,xticks=range(5),xticklabels=[labels[x] for x in q.columns],yticks=range(5),yticklabels=[f'{labels[x]} (n={counts[x]})' for x in q.index],xlabel='Winner 12 months later',ylabel='Initial winner')
+        ax.set(title=name,xticks=range(5),xticklabels=[labels[x] for x in q.columns],yticks=range(5),yticklabels=[f'{labels[x]} (n={counts[x]})' for x in q.index],xlabel='Winner after 12 months',ylabel='Initial winner')
         plt.setp(ax.get_xticklabels(),rotation=38,ha='right')
     fig.colorbar(im,ax=axs,label='Row percentage',shrink=.85); fig.savefig(O/'figure_A1_transition_matrices.pdf'); fig.savefig(O/'figure_A1_transition_matrices.png',dpi=220); plt.close(fig)
     methods=pd.DataFrame([['Equal weight','None',r'$w_i=1/N$'],['Sample GMV','Sample covariance','Long-only minimum variance'],['Ledoit--Wolf GMV','Shrinkage covariance','Long-only minimum variance'],['Inverse volatility','Sample volatility',r'$w_i\propto1/\hat\sigma_i$'],['ERC','Sample covariance','Equal risk contributions']],columns=['Method','Risk input','Allocation rule'])
     datasets=pd.DataFrame([['17 U.S. industries (N=17)','Kenneth French Data Library','1926-07--2026-07','1931-07',84,75],['14 developed-country markets (N=14)','Kenneth French international','1975-01--2025-12','1980-01',36,27],['30 U.S. industries (N=30)','Kenneth French Data Library','1926-07--2026-07','1931-07',84,75]],columns=['Universe','Source','Sample','OOS start','Endpoint pairs','Ex-ante dates'])
     methods.to_csv(O/'table_A5_panel_A_methods.csv',index=False); datasets.to_csv(O/'table_A5_panel_B_data.csv',index=False)
     parent_table(O/'table_A5.tex','Portfolio methods and sample construction. All methods are long-only and fully invested, use a 60-month estimation window, and rebalance monthly. Returns are monthly USD total returns; the country universe satisfies the frozen January-1975 balanced-panel rule.','tab:implementation-data',[('Panel A. Portfolio methods',tabular(methods)),('Panel B. Data and analysis samples',tabular(datasets))])
-    (O/'README.md').write_text('# Lean FRL bundle\n\nMain text: Table 1, Figure 1 (censored-KM winner durability), Figure 2 (endpoint-displacement profiles), and Table 2. For the appendix, insert only `table_A1.tex` through `table_A5.tex`: these are the five publication-level floats, with their panels already inlined. CSV files remain as reproducibility sources. Appendix Table A4 includes the primary h=6/12/24 bootstrap intervals.\n',encoding='utf8')
-    (O/'FIGURE_NOTES.md').write_text('# Figure captions and notes\n\n## Figure 1. Winner durability\n\nKaplan--Meier survival of the method identified as winner at each December origin. Literal failure occurs at the first subsequent monthly endpoint at which the original winner loses first place; material failure occurs when its CEQ shortfall first exceeds 25 annualized bp. Recovery of first place does not reset failure.\n\n## Figure 2. Endpoint-displacement profile\n\nMean endpoint loss at the prespecified 6-, 12-, and 24-month endpoint displacements, using the mechanically eligible sample at each displacement. Lines connect reported horizons for visual guidance only; no functional form or monotonic relationship is estimated.\n\n## Figure A1. Winner transitions\n\nRows are conditioned on the method winning at the initial endpoint. Sparse rows are descriptive; in the country universe, inverse volatility and ERC each occur as the initial winner once.\n\n## Figure A2. Leave-one-out sensitivity of mean endpoint loss\n\nEach point is the change in mean 12-month endpoint loss after excluding the indicated asset relative to the corresponding full-universe estimate. The dashed line denotes no change. Asset omission changes both the opportunity set and its dimension, so differences are sensitivity diagnostics rather than asset-specific causal contributions.\n',encoding='utf8')
+    (O/'README.md').write_text('# Lean FRL bundle\n\nMain text: Table 1, Figure 1 (Kaplan--Meier winner durability), Figure 2 (terminal-date displacement), and Table 2. For the appendix, insert only `table_A1.tex` through `table_A5.tex`: these are the five publication-level floats, with their panels already inlined. CSV files remain as reproducibility sources. Appendix Table A4 includes the primary h=6/12/24 bootstrap intervals.\n',encoding='utf8')
+    (O/'FIGURE_NOTES.md').write_text('# Figure captions and notes\n\n## Figure 1. Winner durability\n\nKaplan--Meier survival of the method identified as winner at each December origin. Literal failure occurs at the first subsequent monthly endpoint at which the original winner loses first place; material failure occurs when its CEQ shortfall first exceeds 25 annualized bp. Recovery of first place does not reset failure.\n\n## Figure 2. Terminal-date displacement\n\nShares of the common eligible terminal dates with a literal winner change or a material endpoint loss at the prespecified 6-, 12-, and 24-month terminal-date displacements. Lines connect reported design points for visual guidance only; no functional form or monotonic relationship is estimated.\n\n## Figure A1. Winner transitions\n\nRows are conditioned on the method winning at the initial endpoint. Sparse rows are descriptive; in the country universe, inverse volatility and ERC each occur as the initial winner once.\n\n## Figure A2. Leave-one-out sensitivity of mean endpoint loss\n\nEach point is the change in mean 12-month endpoint loss after excluding the indicated asset relative to the corresponding full-universe estimate. The dashed line denotes no change. Asset omission changes both the opportunity set and its dimension, so differences are sensitivity diagnostics rather than asset-specific causal contributions.\n',encoding='utf8')
 if __name__=='__main__': main()
