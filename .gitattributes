@@ -1,0 +1,3 @@
+# Preserve exact audit/provenance bytes so snapshot checksums survive checkout.
+audits/** -text whitespace=cr-at-eol
+replication/frozen_run_registry.json -text whitespace=cr-at-eol

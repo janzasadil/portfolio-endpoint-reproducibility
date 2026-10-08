@@ -1,11 +1,22 @@
 # Portfolio Endpoint Reproducibility
 
-Reproducible empirical study of portfolio endpoint methods using fixed, synchronized Fama–French industry-portfolio return panels.
+Scientific code for the portfolio-method terminal-date reproducibility paper,
+using fixed industry and broader USD country-market return panels. The current
+publication target is **QF V4**, with two main tables and five appendix tables.
+Start with [SCIENTIFIC_CORE.md](SCIENTIFIC_CORE.md) for the paper-to-code map and
+[QF_V4_PUBLICATION.md](QF_V4_PUBLICATION.md) for table generation.
+
+Frozen data and completed simulations are not stored in Git. A code checkout
+alone does not reproduce the paper's tables: it also needs the frozen companion
+inputs/results and V4 layout ZIP. Do not substitute fresh French downloads.
+The older local FRL archive is documented in [REPLICATION.md](REPLICATION.md);
+it is not a complete QF V4 release or a public deposit.
 
 ## Frozen design
 
 - **Primary universe:** 17 Fama–French industry portfolios, monthly value-weighted returns.
-- **Replication universe:** 30 Fama–French industry portfolios, monthly value-weighted returns.
+- **Secondary universe:** 14 developed-country broader USD market portfolios.
+- **Granularity check:** 30 Fama–French industry portfolios, monthly value-weighted returns.
 - **Estimation window:** 60 months (configured in `config/experiment.yaml`).
 - **Source:** Kenneth R. French Data Library. The data loader extracts only the monthly *value-weighted* block and converts reported percentages to decimal returns.
 
@@ -44,18 +55,25 @@ Draws are checkpointed every 10 replications. Use `--outer-reps 5000` only for t
 
 ## Final reporting bundle
 
+For the newer QF V4 manuscript (two main tables and five appendix tables), use
+the saved-output exporter documented in [QF_V4_PUBLICATION.md](QF_V4_PUBLICATION.md).
+The FRL command below preserves the older publication architecture.
+
 After completed empirical and diagnostic runs are present locally, regenerate the
 publication bundle without rebuilding portfolio paths or launching a bootstrap:
 
 ```powershell
 $env:PYTHONPATH = 'src'
-python -m portfolio_endpoint.reporting
+python -m portfolio_endpoint.frl_publication
 ```
 
-This writes validation checks, publication tables and figures, supplementary
-tables, `FINAL_VALIDATION_REPORT.md`, `FINAL_RESULTS_SUMMARY.json`, and a
-Results-section draft to `results/publication/`. The command validates saved
-outputs only; it does not replace anything under the original run directories.
+This requires `replication/frozen_source.zip` from the frozen release and writes
+the final two main tables, six appendix tables, figures and manuscript sources
+to `results/publication_final_repaired/`. To use the author's submitted ZIP
+directly, add `--source-zip PATH`. No portfolio paths or bootstrap draws are rebuilt.
+The older `portfolio_endpoint.reporting` module is a legacy industry-only bundle,
+not the exporter for the final paper. See [REPLICATION.md](REPLICATION.md) for
+the frozen numerical environment, five completed bootstrap runs and compilation.
 
 ## Layout
 

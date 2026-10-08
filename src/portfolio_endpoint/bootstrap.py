@@ -57,7 +57,8 @@ def corrected_pw_stationary_block_length(series: np.ndarray) -> int:
                 recent.append(abs(prior_cross) / prior_denom if prior_denom else math.inf)
             if all(value < critical_value for value in recent) and insignificant_start is None:
                 insignificant_start = lag - kn
-    bandwidth = min(2 * max(insignificant_start or 1, 1), m_max)
+    bandwidth = (m_max if insignificant_start is None
+                 else min(2 * max(insignificant_start, 1), m_max))
     long_run_covariance = autocovariances[0]
     g = 0.0
     for lag in range(1, bandwidth + 1):

@@ -21,9 +21,25 @@ from .analysis import (
     survival_summary,
     winner_survival,
 )
-from .bootstrap import outer_bootstrap, outer_sensitivity_bootstrap, percentile_interval
+from .bootstrap import outer_bootstrap, outer_sensitivity_bootstrap, percentile_interval, protocol_block_length
 from .engine import run_headline_paths
-from .ingest import project_root
+from .ingest import project_root, sha256
+
+
+def validate_resume(completed: pd.DataFrame, saved_manifest: dict, identity: dict) -> int:
+    """Fail closed for legacy/mixed designs before any output or path is rebuilt."""
+    if saved_manifest.get("run_identity") != identity:
+        raise ValueError("Resume identity mismatch or legacy manifest: use a new run name; existing outputs preserved")
+    if completed.empty or "replication" not in completed:
+        raise ValueError("Resume requires a nonempty replication registry")
+    if completed.replication.tolist() != list(range(len(completed))):
+        raise ValueError("Replication IDs must be unique, ordered, contiguous and start at zero")
+    if "block_length" not in completed or not (completed.block_length == identity["block_length"]).all():
+        raise ValueError("Saved block lengths differ from the resolved design")
+    expected = "baseline_mean_endpoint_loss" if identity["enhanced_sensitivities"] else "mean_endpoint_loss"
+    if expected not in completed:
+        raise ValueError("Saved replication columns differ from the resolved design")
+    return len(completed)
 
 
 def _json_ready(values: dict) -> dict:
@@ -67,13 +83,59 @@ def main() -> None:
     parser.add_argument("--rebalance-every", type=int, default=1, help="Months between rebalances (3 = quarterly)")
     parser.add_argument("--fixed-block-length", type=int, help="Use fixed circular blocks for an outer-bootstrap sensitivity")
     args = parser.parse_args()
+    if args.outer_reps < 0 or args.checkpoint_every < 1:
+        parser.error("Replication counts must be nonnegative and checkpoint frequency positive")
+    if args.fixed_block_length is not None and args.fixed_block_length < 1:
+        parser.error("Fixed block length must be positive")
+    if args.outer_reps and args.rebalance_every != 1:
+        parser.error("Nonmonthly bootstrap is not supported; quarterly runs must be point estimates only")
+    if args.enhanced_sensitivities and args.fixed_block_length is not None:
+        parser.error("Enhanced sensitivities support stationary resampling only, not fixed blocks")
+    if args.resume and not args.outer_reps:
+        parser.error("Resume requires positive --outer-reps")
 
     root = project_root()
     with (root / "config" / "experiment.yaml").open(encoding="utf-8") as handle:
         config = yaml.safe_load(handle)
     study, dataset = config["study"], config["datasets"][args.dataset]
     lookback = args.lookback or study["estimation_window_months"]
-    returns = pd.read_csv(root / "data" / "processed" / dataset["processed_file"], index_col="date", parse_dates=True)
+    input_path = root / "data" / "processed" / dataset["processed_file"]
+    returns = pd.read_csv(input_path, index_col="date", parse_dates=True)
+    output_dir = root / "results" / (args.run_name or args.dataset)
+    resolved_output = output_dir.resolve()
+    if resolved_output == (root / "results").resolve() or (root / "results").resolve() not in resolved_output.parents:
+        parser.error("Run name must identify a subdirectory within results")
+    manifest = _run_manifest(root, args.dataset, study, 0)
+    identity = {
+        "dataset": args.dataset, "input_sha256": sha256(input_path),
+        "resolved_study": {**study, "estimation_window_months": lookback,
+                           "rebalancing_frequency": args.rebalance_every},
+        "enhanced_sensitivities": args.enhanced_sensitivities,
+        "fixed_block_length": args.fixed_block_length,
+        "block_length": (args.fixed_block_length or protocol_block_length(returns.to_numpy())) if args.outer_reps else None,
+        "source_sha256": {name: sha256(Path(__file__).with_name(name + ".py"))
+                          for name in ("methods", "engine", "analysis", "bootstrap")},
+        "environment": {name: manifest[name] for name in ("python", "numpy", "pandas", "scipy", "scikit_learn")},
+    }
+    # Chunk size and nominal protocol B do not define a draw's identity.
+    identity["resolved_study"].pop("outer_bootstrap_replications", None)
+    identity["resolved_study"].pop("inner_bootstrap_replications", None)
+    completed = pd.DataFrame()
+    start_replication = 0
+    draw_path = output_dir / "outer_bootstrap.csv"
+    if args.resume:
+        if not draw_path.exists() or not (output_dir / "run_manifest.json").exists():
+            parser.error("Resume requires existing draws and their identity manifest")
+        completed = pd.read_csv(draw_path)
+        saved_manifest = json.loads((output_dir / "run_manifest.json").read_text())
+        start_replication = validate_resume(completed, saved_manifest, identity)
+    elif output_dir.exists() and any(output_dir.iterdir()):
+        parser.error("Run directory is not empty; choose a new run name or validated --resume")
+    manifest["run_identity"] = identity
+    manifest["resolved_config"] = {"study": identity["resolved_study"], "dataset": dataset}
+    output_dir.mkdir(parents=True, exist_ok=True)
+    manifest["outer_bootstrap_replications"] = len(completed)
+    (output_dir / "run_manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     paths = run_headline_paths(returns, lookback, study["transaction_cost_per_half_turnover"], args.rebalance_every)
     endpoints = endpoint_reproducibility(
         paths, study["evaluation_horizon_months"], study["endpoint_displacement_months"], study["ceq_risk_aversion"]
@@ -81,8 +143,6 @@ def main() -> None:
     survival = winner_survival(paths, study["evaluation_horizon_months"], study["ceq_risk_aversion"])
     selections = ex_ante_selection(paths, study["evaluation_horizon_months"], study["ceq_risk_aversion"])
 
-    output_dir = root / "results" / (args.run_name or args.dataset)
-    output_dir.mkdir(parents=True, exist_ok=True)
     endpoints.to_csv(output_dir / "endpoint_pairs.csv", index=False)
     kaplan_meier(survival).to_csv(output_dir / "winner_survival.csv", index=False)
     selections.to_csv(output_dir / "ex_ante_selection.csv", index=False)
@@ -97,13 +157,11 @@ def main() -> None:
     })
 
     if args.outer_reps:
-        draw_path = output_dir / "outer_bootstrap.csv"
-        completed = pd.read_csv(draw_path) if args.resume and draw_path.exists() else pd.DataFrame()
-        start_replication = int(completed["replication"].max()) + 1 if not completed.empty else 0
-
         def checkpoint(new_draws: pd.DataFrame) -> None:
             combined = pd.concat([completed, new_draws], ignore_index=True)
             combined.to_csv(draw_path, index=False)
+            manifest["outer_bootstrap_replications"] = len(combined)
+            (output_dir / "run_manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
         common = dict(returns=returns, replications=args.outer_reps, seed=study["bootstrap_seed"],
                       lookback=lookback, transaction_cost=study["transaction_cost_per_half_turnover"],
@@ -128,7 +186,8 @@ def main() -> None:
     with (output_dir / "summary.json").open("w", encoding="utf-8") as handle:
         json.dump(_json_ready(summary), handle, indent=2)
     with (output_dir / "run_manifest.json").open("w", encoding="utf-8") as handle:
-        json.dump(_run_manifest(root, args.dataset, study, int(len(bootstrap)) if args.outer_reps else 0), handle, indent=2)
+        manifest["outer_bootstrap_replications"] = int(len(bootstrap)) if args.outer_reps else 0
+        json.dump(manifest, handle, indent=2)
     print(json.dumps(_json_ready(summary), indent=2))
 
 

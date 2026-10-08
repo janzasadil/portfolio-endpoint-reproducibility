@@ -28,6 +28,7 @@ portfolio-countries = "portfolio_endpoint.countries:main"
 portfolio-extension = "portfolio_endpoint.extension:main"
 portfolio-country-bootstrap-report = "portfolio_endpoint.country_bootstrap_report:main"
 portfolio-frl-publication = "portfolio_endpoint.frl_publication:main"
+portfolio-qf-publication = "portfolio_endpoint.qf_publication:main"
 portfolio-post-referee = "portfolio_endpoint.post_referee:main"
 portfolio-near-tie = "portfolio_endpoint.near_tie:main"
 

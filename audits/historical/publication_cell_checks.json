@@ -1,0 +1,1067 @@
+{
+  "table_1": {
+    "row_count_matches": true,
+    "rows": [
+      {
+        "row": 1,
+        "displayed": [
+          84.0,
+          36.0
+        ],
+        "reconstructed": [
+          84,
+          36
+        ],
+        "equal": true
+      },
+      {
+        "row": 2,
+        "displayed": [
+          21.4,
+          16.7
+        ],
+        "reconstructed": [
+          21.4,
+          16.7
+        ],
+        "equal": true
+      },
+      {
+        "row": 3,
+        "displayed": [
+          25.0,
+          6.0,
+          11.1
+        ],
+        "reconstructed": [
+          25,
+          6.0,
+          11.1
+        ],
+        "equal": true
+      },
+      {
+        "row": 4,
+        "displayed": [
+          7.35,
+          4.04,
+          19.6,
+          10.55,
+          2.14,
+          21.42
+        ],
+        "reconstructed": [
+          7.35,
+          4.04,
+          19.6,
+          10.55,
+          2.14,
+          21.42
+        ],
+        "equal": true
+      },
+      {
+        "row": 5,
+        "displayed": [
+          18.0,
+          6.0
+        ],
+        "reconstructed": [
+          18,
+          6
+        ],
+        "equal": true
+      },
+      {
+        "row": 6,
+        "displayed": [
+          34.3,
+          63.31
+        ],
+        "reconstructed": [
+          34.3,
+          63.31
+        ],
+        "equal": true
+      },
+      {
+        "row": 7,
+        "displayed": [
+          8.86,
+          71.46
+        ],
+        "reconstructed": [
+          8.86,
+          71.46
+        ],
+        "equal": true
+      },
+      {
+        "row": 8,
+        "displayed": [
+          25.0,
+          27.8,
+          66.7
+        ],
+        "reconstructed": [
+          25,
+          27.8,
+          66.7
+        ],
+        "equal": true
+      }
+    ]
+  },
+  "table_2": {
+    "row_count_matches": true,
+    "rows": [
+      {
+        "row": 1,
+        "displayed": [
+          75.0,
+          27.0
+        ],
+        "reconstructed": [
+          75,
+          27
+        ],
+        "equal": true
+      },
+      {
+        "row": 2,
+        "displayed": [
+          38.7,
+          25.9
+        ],
+        "reconstructed": [
+          38.7,
+          25.9
+        ],
+        "equal": true
+      },
+      {
+        "row": 3,
+        "displayed": [
+          109.12,
+          41.41,
+          227.02,
+          48.25,
+          16.91,
+          221.82
+        ],
+        "reconstructed": [
+          109.12,
+          41.41,
+          227.02,
+          48.25,
+          16.91,
+          221.82
+        ],
+        "equal": true
+      },
+      {
+        "row": 4,
+        "displayed": [
+          -10.93,
+          -75.42,
+          186.92,
+          58.11,
+          -108.44,
+          80.31
+        ],
+        "reconstructed": [
+          -10.93,
+          -75.42,
+          186.92,
+          58.11,
+          -108.44,
+          80.31
+        ],
+        "equal": true
+      }
+    ]
+  },
+  "table_A1": {
+    "row_count_matches": true,
+    "rows": [
+      {
+        "row": 1,
+        "displayed": [
+          7.35,
+          21.4,
+          31.0
+        ],
+        "reconstructed": [
+          7.35,
+          21.4,
+          31
+        ],
+        "equal": true
+      },
+      {
+        "row": 2,
+        "displayed": [
+          36.0,
+          9.17,
+          24.4,
+          14.0
+        ],
+        "reconstructed": [
+          36,
+          9.17,
+          24.4,
+          14
+        ],
+        "equal": true
+      },
+      {
+        "row": 3,
+        "displayed": [
+          120.0,
+          10.44,
+          24.1,
+          13.0
+        ],
+        "reconstructed": [
+          120,
+          10.44,
+          24.1,
+          13
+        ],
+        "equal": true
+      },
+      {
+        "row": 4,
+        "displayed": [
+          9.28,
+          21.4,
+          18.0
+        ],
+        "reconstructed": [
+          9.28,
+          21.4,
+          18
+        ],
+        "equal": true
+      },
+      {
+        "row": 5,
+        "displayed": [
+          2.0,
+          10.99,
+          31.0,
+          17.0
+        ],
+        "reconstructed": [
+          2,
+          10.99,
+          31.0,
+          17
+        ],
+        "equal": true
+      },
+      {
+        "row": 6,
+        "displayed": [
+          10.0,
+          8.1,
+          20.2,
+          33.0
+        ],
+        "reconstructed": [
+          10,
+          8.1,
+          20.2,
+          33
+        ],
+        "equal": true
+      },
+      {
+        "row": 7,
+        "displayed": [
+          0.0,
+          8.2,
+          22.6,
+          31.0
+        ],
+        "reconstructed": [
+          0,
+          8.2,
+          22.6,
+          31
+        ],
+        "equal": true
+      },
+      {
+        "row": 8,
+        "displayed": [
+          50.0,
+          8.98,
+          20.2,
+          26.0
+        ],
+        "reconstructed": [
+          50,
+          8.98,
+          20.2,
+          26
+        ],
+        "equal": true
+      },
+      {
+        "row": 9,
+        "displayed": [
+          0.0,
+          66.7,
+          54.2,
+          31.0
+        ],
+        "reconstructed": [
+          0,
+          66.7,
+          54.2,
+          31
+        ],
+        "equal": true
+      },
+      {
+        "row": 10,
+        "displayed": [
+          25.0,
+          89.3,
+          79.5,
+          77.0
+        ],
+        "reconstructed": [
+          25,
+          89.3,
+          79.5,
+          77
+        ],
+        "equal": true
+      },
+      {
+        "row": 11,
+        "displayed": [
+          50.0,
+          92.9,
+          86.7,
+          94.0
+        ],
+        "reconstructed": [
+          50,
+          92.9,
+          86.7,
+          94
+        ],
+        "equal": true
+      },
+      {
+        "row": 12,
+        "displayed": [
+          0.0,
+          69.4,
+          57.1,
+          40.0
+        ],
+        "reconstructed": [
+          0,
+          69.4,
+          57.1,
+          40
+        ],
+        "equal": true
+      },
+      {
+        "row": 13,
+        "displayed": [
+          25.0,
+          77.8,
+          68.6,
+          64.0
+        ],
+        "reconstructed": [
+          25,
+          77.8,
+          68.6,
+          64
+        ],
+        "equal": true
+      },
+      {
+        "row": 14,
+        "displayed": [
+          50.0,
+          88.9,
+          80.0,
+          75.0
+        ],
+        "reconstructed": [
+          50,
+          88.9,
+          80.0,
+          75
+        ],
+        "equal": true
+      }
+    ]
+  },
+  "table_A2": {
+    "row_count_matches": true,
+    "rows": [
+      {
+        "row": 1,
+        "displayed": [
+          6.0,
+          13.3,
+          4.8,
+          3.68,
+          4.44
+        ],
+        "reconstructed": [
+          6,
+          13.3,
+          4.8,
+          3.68,
+          4.44
+        ],
+        "equal": true
+      },
+      {
+        "row": 2,
+        "displayed": [
+          12.0,
+          20.5,
+          4.8,
+          6.56,
+          8.34
+        ],
+        "reconstructed": [
+          12,
+          20.5,
+          4.8,
+          6.56,
+          8.34
+        ],
+        "equal": true
+      },
+      {
+        "row": 3,
+        "displayed": [
+          24.0,
+          28.9,
+          12.1,
+          15.31,
+          49.11
+        ],
+        "reconstructed": [
+          24,
+          28.9,
+          12.0,
+          15.31,
+          49.11
+        ],
+        "equal": false
+      },
+      {
+        "row": 4,
+        "displayed": [
+          6.0,
+          8.6,
+          5.7,
+          1.77,
+          0.0
+        ],
+        "reconstructed": [
+          6,
+          8.6,
+          5.7,
+          1.77,
+          0.0
+        ],
+        "equal": true
+      },
+      {
+        "row": 5,
+        "displayed": [
+          12.0,
+          17.1,
+          11.4,
+          10.85,
+          26.38
+        ],
+        "reconstructed": [
+          12,
+          17.1,
+          11.4,
+          10.85,
+          26.38
+        ],
+        "equal": true
+      },
+      {
+        "row": 6,
+        "displayed": [
+          24.0,
+          22.9,
+          17.1,
+          17.75,
+          43.22
+        ],
+        "reconstructed": [
+          24,
+          22.9,
+          17.1,
+          17.75,
+          43.22
+        ],
+        "equal": true
+      },
+      {
+        "row": 7,
+        "displayed": [
+          17.0,
+          7.35,
+          4.04,
+          19.6,
+          21.4,
+          31.0
+        ],
+        "reconstructed": [
+          17,
+          7.35,
+          4.04,
+          19.6,
+          21.4,
+          31
+        ],
+        "equal": true
+      },
+      {
+        "row": 8,
+        "displayed": [
+          30.0,
+          11.01,
+          4.97,
+          20.87,
+          38.1,
+          11.0
+        ],
+        "reconstructed": [
+          30,
+          11.01,
+          4.97,
+          20.87,
+          38.1,
+          11
+        ],
+        "equal": true
+      }
+    ]
+  },
+  "table_A3": {
+    "row_count_matches": true,
+    "rows": [
+      {
+        "row": 1,
+        "displayed": [
+          17.0,
+          84.0,
+          18.0,
+          7.42,
+          21.5,
+          71.5
+        ],
+        "reconstructed": [
+          17,
+          84,
+          18,
+          7.42,
+          21.5,
+          71.5
+        ],
+        "equal": true
+      },
+      {
+        "row": 2,
+        "displayed": [
+          14.0,
+          36.0,
+          6.0,
+          26.57,
+          40.65,
+          65.0
+        ],
+        "reconstructed": [
+          14,
+          36,
+          6,
+          26.57,
+          40.65,
+          65.0
+        ],
+        "equal": true
+      },
+      {
+        "row": 3,
+        "displayed": [
+          17.0,
+          28.3,
+          15.0,
+          53.0,
+          9.7,
+          3.0,
+          31.0
+        ],
+        "reconstructed": [
+          17,
+          28.3,
+          15,
+          53,
+          9.7,
+          3,
+          31
+        ],
+        "equal": true
+      },
+      {
+        "row": 4,
+        "displayed": [
+          14.0,
+          20.0,
+          2.0,
+          10.0,
+          15.4,
+          4.0,
+          26.0
+        ],
+        "reconstructed": [
+          14,
+          20.0,
+          2,
+          10,
+          15.4,
+          4,
+          26
+        ],
+        "equal": true
+      }
+    ]
+  },
+  "table_A4": {
+    "row_count_matches": true,
+    "rows": [
+      {
+        "row": 1,
+        "displayed": [
+          8.0,
+          2.0,
+          8.0,
+          1.35,
+          0.0,
+          8.0
+        ],
+        "reconstructed": [
+          8,
+          2,
+          8,
+          1.35,
+          0,
+          8
+        ],
+        "equal": true
+      },
+      {
+        "row": 2,
+        "displayed": [
+          6.0,
+          4.0,
+          6.0,
+          17.38,
+          1.0,
+          6.0
+        ],
+        "reconstructed": [
+          6,
+          4,
+          6,
+          17.38,
+          1,
+          6
+        ],
+        "equal": true
+      },
+      {
+        "row": 3,
+        "displayed": [
+          55.0,
+          7.0,
+          55.0,
+          5.47,
+          2.0,
+          55.0
+        ],
+        "reconstructed": [
+          55,
+          7,
+          55,
+          5.47,
+          2,
+          55
+        ],
+        "equal": true
+      },
+      {
+        "row": 4,
+        "displayed": [
+          12.0,
+          3.0,
+          12.0,
+          1.59,
+          0.0,
+          12.0
+        ],
+        "reconstructed": [
+          12,
+          3,
+          12,
+          1.59,
+          0,
+          12
+        ],
+        "equal": true
+      },
+      {
+        "row": 5,
+        "displayed": [
+          3.0,
+          2.0,
+          3.0,
+          2.0,
+          3.0
+        ],
+        "reconstructed": [
+          3,
+          2,
+          3,
+          2,
+          3
+        ],
+        "equal": true
+      },
+      {
+        "row": 6,
+        "displayed": [
+          0.0
+        ],
+        "reconstructed": [
+          0
+        ],
+        "equal": true
+      },
+      {
+        "row": 7,
+        "displayed": [
+          22.0,
+          2.0,
+          22.0,
+          6.5,
+          2.0,
+          22.0
+        ],
+        "reconstructed": [
+          22,
+          2,
+          22,
+          6.5,
+          2,
+          22
+        ],
+        "equal": true
+      },
+      {
+        "row": 8,
+        "displayed": [
+          12.0,
+          2.0,
+          12.0,
+          1.1,
+          0.0,
+          12.0
+        ],
+        "reconstructed": [
+          12,
+          2,
+          12,
+          1.1,
+          0,
+          12
+        ],
+        "equal": true
+      },
+      {
+        "row": 9,
+        "displayed": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "reconstructed": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "equal": true
+      },
+      {
+        "row": 10,
+        "displayed": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "reconstructed": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "equal": true
+      }
+    ]
+  },
+  "table_A5": {
+    "row_count_matches": true,
+    "rows": [
+      {
+        "row": 1,
+        "displayed": [
+          17.0,
+          2000.0,
+          7.35,
+          4.04,
+          19.6
+        ],
+        "reconstructed": [
+          17,
+          2000,
+          7.35,
+          4.04,
+          19.6
+        ],
+        "equal": true
+      },
+      {
+        "row": 2,
+        "displayed": [
+          12.0,
+          1000.0,
+          7.35,
+          3.65,
+          18.14
+        ],
+        "reconstructed": [
+          12,
+          1000,
+          7.35,
+          3.65,
+          18.14
+        ],
+        "equal": true
+      },
+      {
+        "row": 3,
+        "displayed": [
+          24.0,
+          1000.0,
+          7.35,
+          3.87,
+          19.26
+        ],
+        "reconstructed": [
+          24,
+          1000,
+          7.35,
+          3.87,
+          19.26
+        ],
+        "equal": true
+      },
+      {
+        "row": 4,
+        "displayed": [
+          14.0,
+          1000.0,
+          10.55,
+          2.14,
+          21.42
+        ],
+        "reconstructed": [
+          14,
+          1000,
+          10.55,
+          2.14,
+          21.42
+        ],
+        "equal": true
+      },
+      {
+        "row": 5,
+        "displayed": [
+          6.0,
+          3.59,
+          1.54,
+          10.91
+        ],
+        "reconstructed": [
+          6,
+          3.59,
+          1.54,
+          10.91
+        ],
+        "equal": true
+      },
+      {
+        "row": 6,
+        "displayed": [
+          12.0,
+          7.35,
+          4.04,
+          19.6
+        ],
+        "reconstructed": [
+          12,
+          7.35,
+          4.04,
+          19.6
+        ],
+        "equal": true
+      },
+      {
+        "row": 7,
+        "displayed": [
+          24.0,
+          15.31,
+          9.0,
+          40.23
+        ],
+        "reconstructed": [
+          24,
+          15.31,
+          9.0,
+          40.23
+        ],
+        "equal": true
+      },
+      {
+        "row": 8,
+        "displayed": [
+          10.55,
+          2.14,
+          21.42
+        ],
+        "reconstructed": [
+          10.55,
+          2.14,
+          21.42
+        ],
+        "equal": true
+      },
+      {
+        "row": 9,
+        "displayed": [
+          16.7,
+          11.1,
+          50.0
+        ],
+        "reconstructed": [
+          16.7,
+          11.1,
+          50.0
+        ],
+        "equal": true
+      },
+      {
+        "row": 10,
+        "displayed": [
+          12.0,
+          69.4,
+          30.6,
+          80.6
+        ],
+        "reconstructed": [
+          12,
+          69.4,
+          30.6,
+          80.6
+        ],
+        "equal": true
+      },
+      {
+        "row": 11,
+        "displayed": [
+          24.0,
+          57.9,
+          13.9,
+          71.9
+        ],
+        "reconstructed": [
+          24,
+          57.9,
+          13.9,
+          71.9
+        ],
+        "equal": true
+      },
+      {
+        "row": 12,
+        "displayed": [
+          25.9,
+          0.0,
+          59.3
+        ],
+        "reconstructed": [
+          25.9,
+          0.0,
+          59.3
+        ],
+        "equal": true
+      },
+      {
+        "row": 13,
+        "displayed": [
+          48.25,
+          16.91,
+          221.82
+        ],
+        "reconstructed": [
+          48.25,
+          16.91,
+          221.82
+        ],
+        "equal": true
+      },
+      {
+        "row": 14,
+        "displayed": [
+          58.11,
+          -108.44,
+          80.31
+        ],
+        "reconstructed": [
+          58.11,
+          -108.44,
+          80.31
+        ],
+        "equal": true
+      }
+    ]
+  }
+}

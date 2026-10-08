@@ -1,0 +1,364 @@
+{
+  "primary_17_definitive_B2000": {
+    "dataset": "primary_17_industry",
+    "resolved_study": {
+      "frequency": "monthly",
+      "estimation_window_months": 60,
+      "return_unit": "decimal",
+      "missing_value_policy": "reject",
+      "rebalancing_frequency": "monthly",
+      "transaction_cost_per_half_turnover": 0.0025,
+      "ceq_risk_aversion": 5,
+      "evaluation_horizon_months": 120,
+      "endpoint_displacement_months": 12,
+      "tie_break_order": [
+        "equal_weight",
+        "sample_gmv",
+        "ledoit_wolf_gmv",
+        "inverse_volatility",
+        "erc"
+      ],
+      "outer_bootstrap_replications": 2000,
+      "inner_bootstrap_replications": 0,
+      "bootstrap_seed": 20260909
+    },
+    "rebalance_every": 1,
+    "enhanced_sensitivities": true,
+    "bootstrap_scheme": "stationary",
+    "fixed_block_length": null,
+    "saved_selected_block_lengths": [
+      34
+    ],
+    "data_sha256": "33a3dc25c6ad938495ee553d674bfb963d0252581bd4a48fd2db7c9f00e244b3",
+    "raw_sha256": "d99108d51938a44559a839df39a92ab531bd36bcd61bf7f6ddf8b89b7b8300c1",
+    "original_run_manifest": {
+      "dataset": "primary_17_industry",
+      "git_commit": "29bebebcd28660c72d5b4e61cfa93eb2f3589ec5",
+      "python": "3.13.3 (tags/v3.13.3:6280bb5, Apr  8 2025, 14:47:33) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "Windows-10-10.0.19045-SP0",
+      "numpy": "2.3.5",
+      "pandas": "2.3.3",
+      "scipy": "1.16.3",
+      "scikit_learn": "1.8.0",
+      "bootstrap_seed": 20260909,
+      "outer_bootstrap_replications": 2000
+    },
+    "provenance_note": "Post-audit resolved registry; original manifests preserved, not retroactively rewritten"
+  },
+  "country_replication_B1000": {
+    "dataset": "replication_international_countries",
+    "resolved_study": {
+      "frequency": "monthly",
+      "estimation_window_months": 60,
+      "return_unit": "decimal",
+      "missing_value_policy": "reject",
+      "rebalancing_frequency": "monthly",
+      "transaction_cost_per_half_turnover": 0.0025,
+      "ceq_risk_aversion": 5,
+      "evaluation_horizon_months": 120,
+      "endpoint_displacement_months": 12,
+      "tie_break_order": [
+        "equal_weight",
+        "sample_gmv",
+        "ledoit_wolf_gmv",
+        "inverse_volatility",
+        "erc"
+      ],
+      "outer_bootstrap_replications": 1000,
+      "inner_bootstrap_replications": 0,
+      "bootstrap_seed": 20260909
+    },
+    "rebalance_every": 1,
+    "enhanced_sensitivities": false,
+    "bootstrap_scheme": "stationary",
+    "fixed_block_length": null,
+    "saved_selected_block_lengths": [
+      6
+    ],
+    "data_sha256": "7e02274cef17eacc850d55db5e35639ae27a602d7287c376099b4bb52f39a021",
+    "raw_sha256": "6041ff104726d6aadfea76c4ef25af35594e799b90064b76b6bb83bd4acb0091",
+    "original_run_manifest": {
+      "dataset": "replication_international_countries",
+      "git_commit": "0ffb92b11c52738646138eec0491fcd347555301",
+      "python": "3.13.3 (tags/v3.13.3:6280bb5, Apr  8 2025, 14:47:33) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "Windows-10-10.0.19045-SP0",
+      "numpy": "2.3.5",
+      "pandas": "2.3.3",
+      "scipy": "1.16.3",
+      "scikit_learn": "1.8.0",
+      "bootstrap_seed": 20260909,
+      "outer_bootstrap_replications": 1000
+    },
+    "provenance_note": "Post-audit resolved registry; original manifests preserved, not retroactively rewritten"
+  },
+  "replication_30_B1000": {
+    "dataset": "replication_30_industry",
+    "resolved_study": {
+      "frequency": "monthly",
+      "estimation_window_months": 60,
+      "return_unit": "decimal",
+      "missing_value_policy": "reject",
+      "rebalancing_frequency": "monthly",
+      "transaction_cost_per_half_turnover": 0.0025,
+      "ceq_risk_aversion": 5,
+      "evaluation_horizon_months": 120,
+      "endpoint_displacement_months": 12,
+      "tie_break_order": [
+        "equal_weight",
+        "sample_gmv",
+        "ledoit_wolf_gmv",
+        "inverse_volatility",
+        "erc"
+      ],
+      "outer_bootstrap_replications": 1000,
+      "inner_bootstrap_replications": 0,
+      "bootstrap_seed": 20260909
+    },
+    "rebalance_every": 1,
+    "enhanced_sensitivities": false,
+    "bootstrap_scheme": "stationary",
+    "fixed_block_length": null,
+    "saved_selected_block_lengths": [
+      34
+    ],
+    "data_sha256": "bef2e1d5bba9e3eba4766d08aa1f68792dd3f8335a0728bbd93a6c0fdc2148cd",
+    "raw_sha256": "965275065e93d289e416566d1b399fb63cef944a3de46a19a413d7adc869b600",
+    "original_run_manifest": {
+      "dataset": "replication_30_industry",
+      "git_commit": "3a848e52580f3417ac08f37755c1125ad316bd94",
+      "python": "3.13.3 (tags/v3.13.3:6280bb5, Apr  8 2025, 14:47:33) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "Windows-10-10.0.19045-SP0",
+      "numpy": "2.3.5",
+      "pandas": "2.3.3",
+      "scipy": "1.16.3",
+      "scikit_learn": "1.8.0",
+      "bootstrap_seed": 20260909,
+      "outer_bootstrap_replications": 1000
+    },
+    "provenance_note": "Post-audit resolved registry; original manifests preserved, not retroactively rewritten"
+  },
+  "primary_17_fixedblock12_B1000": {
+    "dataset": "primary_17_industry",
+    "resolved_study": {
+      "frequency": "monthly",
+      "estimation_window_months": 60,
+      "return_unit": "decimal",
+      "missing_value_policy": "reject",
+      "rebalancing_frequency": "monthly",
+      "transaction_cost_per_half_turnover": 0.0025,
+      "ceq_risk_aversion": 5,
+      "evaluation_horizon_months": 120,
+      "endpoint_displacement_months": 12,
+      "tie_break_order": [
+        "equal_weight",
+        "sample_gmv",
+        "ledoit_wolf_gmv",
+        "inverse_volatility",
+        "erc"
+      ],
+      "outer_bootstrap_replications": 1000,
+      "inner_bootstrap_replications": 0,
+      "bootstrap_seed": 20260909
+    },
+    "rebalance_every": 1,
+    "enhanced_sensitivities": false,
+    "bootstrap_scheme": "fixed_circular",
+    "fixed_block_length": 12,
+    "saved_selected_block_lengths": [
+      12
+    ],
+    "data_sha256": "33a3dc25c6ad938495ee553d674bfb963d0252581bd4a48fd2db7c9f00e244b3",
+    "raw_sha256": "d99108d51938a44559a839df39a92ab531bd36bcd61bf7f6ddf8b89b7b8300c1",
+    "original_run_manifest": {
+      "dataset": "primary_17_industry",
+      "git_commit": "3a848e52580f3417ac08f37755c1125ad316bd94",
+      "python": "3.13.3 (tags/v3.13.3:6280bb5, Apr  8 2025, 14:47:33) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "Windows-10-10.0.19045-SP0",
+      "numpy": "2.3.5",
+      "pandas": "2.3.3",
+      "scipy": "1.16.3",
+      "scikit_learn": "1.8.0",
+      "bootstrap_seed": 20260909,
+      "outer_bootstrap_replications": 1000
+    },
+    "provenance_note": "Post-audit resolved registry; original manifests preserved, not retroactively rewritten"
+  },
+  "primary_17_fixedblock24_B1000": {
+    "dataset": "primary_17_industry",
+    "resolved_study": {
+      "frequency": "monthly",
+      "estimation_window_months": 60,
+      "return_unit": "decimal",
+      "missing_value_policy": "reject",
+      "rebalancing_frequency": "monthly",
+      "transaction_cost_per_half_turnover": 0.0025,
+      "ceq_risk_aversion": 5,
+      "evaluation_horizon_months": 120,
+      "endpoint_displacement_months": 12,
+      "tie_break_order": [
+        "equal_weight",
+        "sample_gmv",
+        "ledoit_wolf_gmv",
+        "inverse_volatility",
+        "erc"
+      ],
+      "outer_bootstrap_replications": 1000,
+      "inner_bootstrap_replications": 0,
+      "bootstrap_seed": 20260909
+    },
+    "rebalance_every": 1,
+    "enhanced_sensitivities": false,
+    "bootstrap_scheme": "fixed_circular",
+    "fixed_block_length": 24,
+    "saved_selected_block_lengths": [
+      24
+    ],
+    "data_sha256": "33a3dc25c6ad938495ee553d674bfb963d0252581bd4a48fd2db7c9f00e244b3",
+    "raw_sha256": "d99108d51938a44559a839df39a92ab531bd36bcd61bf7f6ddf8b89b7b8300c1",
+    "original_run_manifest": {
+      "dataset": "primary_17_industry",
+      "git_commit": "3a848e52580f3417ac08f37755c1125ad316bd94",
+      "python": "3.13.3 (tags/v3.13.3:6280bb5, Apr  8 2025, 14:47:33) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "Windows-10-10.0.19045-SP0",
+      "numpy": "2.3.5",
+      "pandas": "2.3.3",
+      "scipy": "1.16.3",
+      "scikit_learn": "1.8.0",
+      "bootstrap_seed": 20260909,
+      "outer_bootstrap_replications": 1000
+    },
+    "provenance_note": "Post-audit resolved registry; original manifests preserved, not retroactively rewritten"
+  },
+  "primary_17_L36": {
+    "dataset": "primary_17_industry",
+    "resolved_study": {
+      "frequency": "monthly",
+      "estimation_window_months": 36,
+      "return_unit": "decimal",
+      "missing_value_policy": "reject",
+      "rebalancing_frequency": "monthly",
+      "transaction_cost_per_half_turnover": 0.0025,
+      "ceq_risk_aversion": 5,
+      "evaluation_horizon_months": 120,
+      "endpoint_displacement_months": 12,
+      "tie_break_order": [
+        "equal_weight",
+        "sample_gmv",
+        "ledoit_wolf_gmv",
+        "inverse_volatility",
+        "erc"
+      ],
+      "outer_bootstrap_replications": 0,
+      "inner_bootstrap_replications": 0,
+      "bootstrap_seed": 20260909
+    },
+    "rebalance_every": 1,
+    "enhanced_sensitivities": false,
+    "bootstrap_scheme": "none",
+    "fixed_block_length": null,
+    "saved_selected_block_lengths": [],
+    "data_sha256": "33a3dc25c6ad938495ee553d674bfb963d0252581bd4a48fd2db7c9f00e244b3",
+    "raw_sha256": "d99108d51938a44559a839df39a92ab531bd36bcd61bf7f6ddf8b89b7b8300c1",
+    "original_run_manifest": {
+      "dataset": "primary_17_industry",
+      "git_commit": "3a848e52580f3417ac08f37755c1125ad316bd94",
+      "python": "3.13.3 (tags/v3.13.3:6280bb5, Apr  8 2025, 14:47:33) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "Windows-10-10.0.19045-SP0",
+      "numpy": "2.3.5",
+      "pandas": "2.3.3",
+      "scipy": "1.16.3",
+      "scikit_learn": "1.8.0",
+      "bootstrap_seed": 20260909,
+      "outer_bootstrap_replications": 0
+    },
+    "provenance_note": "Post-audit resolved registry; original manifests preserved, not retroactively rewritten"
+  },
+  "primary_17_L120": {
+    "dataset": "primary_17_industry",
+    "resolved_study": {
+      "frequency": "monthly",
+      "estimation_window_months": 120,
+      "return_unit": "decimal",
+      "missing_value_policy": "reject",
+      "rebalancing_frequency": "monthly",
+      "transaction_cost_per_half_turnover": 0.0025,
+      "ceq_risk_aversion": 5,
+      "evaluation_horizon_months": 120,
+      "endpoint_displacement_months": 12,
+      "tie_break_order": [
+        "equal_weight",
+        "sample_gmv",
+        "ledoit_wolf_gmv",
+        "inverse_volatility",
+        "erc"
+      ],
+      "outer_bootstrap_replications": 0,
+      "inner_bootstrap_replications": 0,
+      "bootstrap_seed": 20260909
+    },
+    "rebalance_every": 1,
+    "enhanced_sensitivities": false,
+    "bootstrap_scheme": "none",
+    "fixed_block_length": null,
+    "saved_selected_block_lengths": [],
+    "data_sha256": "33a3dc25c6ad938495ee553d674bfb963d0252581bd4a48fd2db7c9f00e244b3",
+    "raw_sha256": "d99108d51938a44559a839df39a92ab531bd36bcd61bf7f6ddf8b89b7b8300c1",
+    "original_run_manifest": {
+      "dataset": "primary_17_industry",
+      "git_commit": "3a848e52580f3417ac08f37755c1125ad316bd94",
+      "python": "3.13.3 (tags/v3.13.3:6280bb5, Apr  8 2025, 14:47:33) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "Windows-10-10.0.19045-SP0",
+      "numpy": "2.3.5",
+      "pandas": "2.3.3",
+      "scipy": "1.16.3",
+      "scikit_learn": "1.8.0",
+      "bootstrap_seed": 20260909,
+      "outer_bootstrap_replications": 0
+    },
+    "provenance_note": "Post-audit resolved registry; original manifests preserved, not retroactively rewritten"
+  },
+  "primary_17_quarterly": {
+    "dataset": "primary_17_industry",
+    "resolved_study": {
+      "frequency": "monthly",
+      "estimation_window_months": 60,
+      "return_unit": "decimal",
+      "missing_value_policy": "reject",
+      "rebalancing_frequency": "quarterly",
+      "transaction_cost_per_half_turnover": 0.0025,
+      "ceq_risk_aversion": 5,
+      "evaluation_horizon_months": 120,
+      "endpoint_displacement_months": 12,
+      "tie_break_order": [
+        "equal_weight",
+        "sample_gmv",
+        "ledoit_wolf_gmv",
+        "inverse_volatility",
+        "erc"
+      ],
+      "outer_bootstrap_replications": 0,
+      "inner_bootstrap_replications": 0,
+      "bootstrap_seed": 20260909
+    },
+    "rebalance_every": 3,
+    "enhanced_sensitivities": false,
+    "bootstrap_scheme": "none",
+    "fixed_block_length": null,
+    "saved_selected_block_lengths": [],
+    "data_sha256": "33a3dc25c6ad938495ee553d674bfb963d0252581bd4a48fd2db7c9f00e244b3",
+    "raw_sha256": "d99108d51938a44559a839df39a92ab531bd36bcd61bf7f6ddf8b89b7b8300c1",
+    "original_run_manifest": {
+      "dataset": "primary_17_industry",
+      "git_commit": "3a848e52580f3417ac08f37755c1125ad316bd94",
+      "python": "3.13.3 (tags/v3.13.3:6280bb5, Apr  8 2025, 14:47:33) [MSC v.1943 64 bit (AMD64)]",
+      "platform": "Windows-10-10.0.19045-SP0",
+      "numpy": "2.3.5",
+      "pandas": "2.3.3",
+      "scipy": "1.16.3",
+      "scikit_learn": "1.8.0",
+      "bootstrap_seed": 20260909,
+      "outer_bootstrap_replications": 0
+    },
+    "provenance_note": "Post-audit resolved registry; original manifests preserved, not retroactively rewritten"
+  }
+}

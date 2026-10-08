@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 
 from .ingest import MISSING_CODES, sha256
 
@@ -43,11 +44,11 @@ def _market_from_text(text: str) -> pd.Series:
         records.append((fields[0], float(fields[1])))
     if not records:
         raise ValueError("Broader USD market-return section has no monthly observations")
-    result = pd.Series(dict(records), dtype=float)
+    result = pd.Series([value for _, value in records], index=[date for date, _ in records], dtype=float)
     result.index = pd.to_datetime(result.index, format="%Y%m") + pd.offsets.MonthEnd(0)
     if result.index.has_duplicates or not result.index.is_monotonic_increasing:
         raise ValueError("Country market series has invalid monthly dates")
-    if result.isna().any() or result.isin(MISSING_CODES).any():
+    if not np.isfinite(result.to_numpy()).all() or result.isin(MISSING_CODES).any():
         raise ValueError("Country market series has missing values or French missing codes")
     return result / 100.0
 

@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .methods import HEADLINE_METHODS
+from .ingest import validate_monthly_calendar
 
 
 @dataclass(frozen=True)
@@ -36,6 +37,7 @@ def run_continuous_path(
         raise ValueError("Return matrix is too short for the requested lookback")
     if returns.isna().any().any() or not np.isfinite(returns.to_numpy()).all():
         raise ValueError("Return matrix contains missing or nonfinite values")
+    validate_monthly_calendar(returns.index)
 
     values = returns.to_numpy(dtype=float)
     targets: list[np.ndarray] = []

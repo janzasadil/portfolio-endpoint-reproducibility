@@ -18,3 +18,8 @@ results/*
 .vscode/
 .DS_Store
 .firecrawl/
+release/
+output/
+tmp/
+# Frozen publication templates are distributed inside the release archive.
+replication/frozen_source.zip

@@ -17,9 +17,20 @@ def main() -> None:
         lo,hi=np.percentile(draws[col],[2.5,97.5])
         rows.append({'metric':label,'point_estimate':summary[col]*scale,'ci_low':lo*scale,'ci_high':hi*scale,'unit':unit,'bootstrap_replications':len(draws)})
     table=pd.DataFrame(rows); table.to_csv(out/'country_bootstrap_B1000_summary.csv',index=False)
+    def rendered(label, signed=False):
+        row=table.set_index('metric').loc[label]
+        point=format(row.point_estimate,'+.2f' if signed else '.2f')
+        return f'{point} {row.unit} [{row.ci_low:.2f}, {row.ci_high:.2f}]'
+    decisions=len(pd.read_csv(run/'ex_ante_selection.csv'))
+    pairs=len(pd.read_csv(run/'endpoint_pairs.csv'))
     text=("# Country stationary-bootstrap analysis\n\n"
-          "The synchronized-month stationary bootstrap completed B=1,000 replications. The country mean endpoint loss is 10.55 bp, with a percentile 95% interval of [2.14, 21.42] bp. Thus the country endpoint-loss estimate is positive across this completed interval. Literal-switching and literal-survival intervals are wide, consistent with only 36 headline endpoint pairs.\n\n"
-          "The preceding-performance selector has 27 decision dates. Its mean selector-minus-ensemble result is +58.11 bp but its percentile interval [-108.44, 80.31] bp spans zero. This is not evidence of a reliable implementable advantage. Selection regret is 48.25 bp [16.91, 221.82].\n\n"
+          f"The synchronized-month stationary bootstrap completed B={len(draws):,} replications. "
+          f"Mean endpoint loss (95% percentile interval): {rendered('Mean endpoint loss')}. "
+          f"The headline sample contains {pairs} endpoint pairs.\n\n"
+          f"The preceding-performance selector has {decisions} decision dates. "
+          f"Selector minus ensemble: {rendered('Selector minus ensemble',signed=True)}. "
+          f"Selection regret: {rendered('Selection regret')}. "
+          "These are saved-draw uncertainty summaries, not a guarantee of an implementable advantage.\n\n"
           "Material-survival intervals and the material-minus-literal survival difference cannot be recovered from the saved bootstrap draws: those artifacts contain literal survival only. Exact dependence-aware uncertainty would require a new country stationary bootstrap that saves material survival at each pseudo-history; it is not run here.\n")
     (out/'COUNTRY_BOOTSTRAP_ANALYSIS.md').write_text(text,encoding='utf8')
 if __name__=='__main__': main()

@@ -11,10 +11,18 @@ from pathlib import Path
 from urllib.request import urlretrieve
 
 import pandas as pd
+import numpy as np
 import yaml
 
 MONTHLY_HEADER = "Average Value Weighted Returns -- Monthly"
 MISSING_CODES = {-99.99, -999.0}
+
+
+def validate_monthly_calendar(index: pd.DatetimeIndex) -> None:
+    """Rows must represent unique, consecutive month ends, not just row positions."""
+    if (len(index) == 0 or index.has_duplicates or not index.is_monotonic_increasing
+            or not index.equals(pd.date_range(index[0], index[-1], freq="ME", name=index.name))):
+        raise ValueError("Monthly dates must be unique, increasing, uninterrupted month ends")
 
 
 def project_root() -> Path:
@@ -51,10 +59,9 @@ def parse_value_weighted_monthly(text: str) -> pd.DataFrame:
     panel.columns = [column.strip() for column in panel.columns]
     panel = panel.apply(pd.to_numeric, errors="coerce")
 
-    if panel.isna().any().any() or panel.isin(MISSING_CODES).any().any():
+    if not np.isfinite(panel.to_numpy()).all() or panel.isin(MISSING_CODES).any().any():
         raise ValueError("Monthly panel contains a missing or French missing-code return")
-    if panel.index.has_duplicates or not panel.index.is_monotonic_increasing:
-        raise ValueError("Monthly panel dates must be unique and increasing")
+    validate_monthly_calendar(panel.index)
     return panel / 100.0
 
 
@@ -83,7 +90,15 @@ def ingest_dataset(name: str, spec: dict[str, str], root: Path) -> None:
     archive, output = raw_dir / spec["raw_file"], processed_dir / spec["processed_file"]
     if not archive.exists():
         urlretrieve(spec["url"], archive)
-    panel = extract_zip_panel(archive)
+    if spec["raw_file"] == "F-F_International_Countries.zip":
+        from .countries import parse_broader_country_markets
+        import json
+        panel, audit = parse_broader_country_markets(archive)
+        audit_dir = root / "results/country_extension"
+        audit_dir.mkdir(parents=True, exist_ok=True)
+        (audit_dir / "country_data_audit.json").write_text(json.dumps(audit, indent=2), encoding="utf-8")
+    else:
+        panel = extract_zip_panel(archive)
     panel.to_csv(output, index=True, float_format="%.10f")
     append_manifest(root / "DATA_MANIFEST.md", name, archive, output, panel)
 

@@ -25,4 +25,9 @@ This manifest records the machine-level choices that implement the frozen scient
 - selected outer block length for each universe;
 - generated result-file checksums and run timestamp.
 
-The 5,000-rep outer run and 2,000-rep endpoint-specific inner runs have not yet been launched.
+The preceding entries describe the original planned execution, not the final
+completed run registry. The final primary outer bootstrap used 2,000 paired
+replications; country, 30-industry, and 12/24-month circular-block runs used
+1,000 each. No inner bootstrap was run. Exact post-audit resolved configurations,
+frozen input identities and original manifests are supplied in the replication
+release's `replication/frozen_run_registry.json`; see `REPLICATION.md`.
