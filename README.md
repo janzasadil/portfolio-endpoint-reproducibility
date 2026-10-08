@@ -24,34 +24,30 @@ The French library changed its underlying CRSP return format from FIZ to CIZ beg
 
 ## Quick start
 
-Requires Python 3.11 or newer.
+The frozen numerical environment uses Python 3.13.3.
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
-portfolio-ingest
-pytest
+python -m pip install -r requirements-frozen.txt
+python -m pip install --no-deps --no-build-isolation -e .
+python -m pytest -q
 ```
 
-`portfolio-ingest` downloads a configured archive only when it is absent from `data/raw/`, writes decimal monthly return panels to `data/processed/`, and updates the manifest. Existing raw archives are never overwritten. Raw data and generated outputs are intentionally ignored by Git.
-
-Run the minimum primary analysis with:
+With the paper-specific frozen companion package restored, reproduce the QF tables
+and all four figures with one command:
 
 ```powershell
-$env:PYTHONPATH = 'src'
-python -m portfolio_endpoint.study
+python scripts/reproduce_qf.py
 ```
 
-It writes endpoint, survival, selector, and summary outputs under `results/primary_17_industry/`. For a resumable 2,000-rep outer bootstrap in two 1,000-rep chunks:
+This validates frozen input identities and regenerates seven tables/four figures
+from saved outputs; it does not run an empirical analysis or bootstrap. The local
+QF archive is a candidate pending licensing/data-redistribution checks, not a DOI
+deposit. See [replication/QF_RELEASE_README.md](replication/QF_RELEASE_README.md).
 
-```powershell
-python -m portfolio_endpoint.study --run-name primary_17_B2000 --outer-reps 1000
-# After the first chunk finishes:
-python -m portfolio_endpoint.study --run-name primary_17_B2000 --outer-reps 1000 --resume
-```
-
-Draws are checkpointed every 10 replications. Use `--outer-reps 5000` only for the full (slow) protocol bootstrap.
+`portfolio-ingest` is for fresh-data work only, not restoration of the frozen
+paper sample. Data and generated research outputs are intentionally ignored by Git.
 
 ## Final reporting bundle
 
@@ -59,26 +55,14 @@ For the newer QF V4 manuscript (two main tables and five appendix tables), use
 the saved-output exporter documented in [QF_V4_PUBLICATION.md](QF_V4_PUBLICATION.md).
 The FRL command below preserves the older publication architecture.
 
-After completed empirical and diagnostic runs are present locally, regenerate the
-publication bundle without rebuilding portfolio paths or launching a bootstrap:
-
-```powershell
-$env:PYTHONPATH = 'src'
-python -m portfolio_endpoint.frl_publication
-```
-
-This requires `replication/frozen_source.zip` from the frozen release and writes
-the final two main tables, six appendix tables, figures and manuscript sources
-to `results/publication_final_repaired/`. To use the author's submitted ZIP
-directly, add `--source-zip PATH`. No portfolio paths or bootstrap draws are rebuilt.
-The older `portfolio_endpoint.reporting` module is a legacy industry-only bundle,
-not the exporter for the final paper. See [REPLICATION.md](REPLICATION.md) for
-the frozen numerical environment, five completed bootstrap runs and compilation.
+Historical FRL/reporting utilities remain in the development repository, documented
+in [REPLICATION.md](REPLICATION.md), but are excluded from the paper-specific QF
+archive. QF generation no longer depends on those utilities or old near-tie results.
 
 ## Layout
 
 - `config/` — fixed experimental choices and data locations.
-- `src/portfolio_endpoint/` — ingestion and future portfolio-method implementation.
+- `src/portfolio_endpoint/` — scientific implementation and publication generation.
 - `tests/` — parser and protocol tests.
 - `data/raw/` — immutable source archives, local only.
 - `data/processed/` — derived panels, local only.

@@ -1,5 +1,8 @@
 # Execution manifest
 
+Historical planned/protocol execution record, not the completed-run counts.
+See `replication/frozen_run_registry.json` and `SCIENTIFIC_CORE.md` for actual runs.
+
 This manifest records the machine-level choices that implement the frozen scientific protocol. It must be completed and committed immediately before the final empirical run; changing it afterward requires an explicitly classified correction or exploratory branch.
 
 ## Fixed implementation choices

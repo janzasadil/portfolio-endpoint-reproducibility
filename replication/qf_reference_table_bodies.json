@@ -1,0 +1,31 @@
+{
+  "table_1": [
+    "\\multicolumn{3}{l}{\\textbf{Panel A. All endpoint pairs}}\\\\[-0.15em]\n\\quad Endpoint pairs & 84 & 36 \\\\\n\\quad Winner change & 21.4\\% & 16.7\\% \\\\\n\\quad Endpoint loss $>25$ bp & 6.0\\% & 11.1\\% \\\\\n\\quad Mean endpoint loss & \\makecell{7.35\\\\\\footnotesize$(4.04,\\,19.60)$} & \\makecell{10.55\\\\\\footnotesize$(2.14,\\,21.42)$} \\\\\n\\addlinespace[0.25em]\n\\multicolumn{3}{l}{\\textbf{Panel B. Winner-change pairs}}\\\\[-0.15em]\n\\quad Pairs & 18 & 6 \\\\\n\\quad Mean endpoint loss & 34.30 & 63.31 \\\\\n\\quad Median initial CEQ gap & 8.79 & 50.23 \\\\\n\\quad Median relative CEQ change & 22.93 & 158.87 \\\\\n\\quad Median endpoint loss & 8.86 & 71.46 \\\\\n\\quad Endpoint loss $>25$ bp & 5/18 (27.8\\%) & 4/6 (66.7\\%) \\\\"
+  ],
+  "table_2": [
+    "Decision dates & 75 & 27 \\\\\nCorrect-selection rate & 38.7\\% & 25.9\\% \\\\\nMost frequent winner rate & 62.7\\% & 55.6\\% \\\\\nMean selection regret & 109.12 $(41.41,\\,227.02)$ & 48.25 $(16.91,\\,221.82)$ \\\\\nLowest fixed-method mean regret & 46.84 & 21.04 \\\\\nMean selector $-$ ensemble CEQ & $-10.93$ $(-75.42,\\,186.92)$ & $+58.11$ $(-108.44,\\,80.31)$ \\\\"
+  ],
+  "table_A1": [
+    "\\textbf{Baseline} & \\textbf{7.35} & \\textbf{21.4\\%} & \\textbf{31} \\\\\n\\addlinespace\n\\multicolumn{4}{l}{\\textbf{Estimation window and rebalancing}} \\\\\n\\quad $L=36$ months & 9.17 & 24.4\\% & 14 \\\\\n\\quad $L=120$ months & 10.44 & 24.1\\% & 13 \\\\\n\\quad Quarterly rebalancing & 9.28 & 21.4\\% & 18 \\\\\n\\addlinespace\n\\multicolumn{4}{l}{\\textbf{Risk aversion}} \\\\\n\\quad $\\gamma=2$ & 10.99 & 31.0\\% & 17 \\\\\n\\quad $\\gamma=10$ & 8.10 & 20.2\\% & 33 \\\\\n\\addlinespace\n\\multicolumn{4}{l}{\\textbf{Transaction costs}} \\\\\n\\quad $c=0$ bp & 8.20 & 22.6\\% & 31 \\\\\n\\quad $c=50$ bp & 8.98 & 20.2\\% & 26 \\\\\n",
+    "\\multicolumn{5}{l}{\\textbf{17 industries}} \\\\\n & 0 & 66.7\\% & 54.2\\% & 31 \\\\\n & 25 & 89.3\\% & 79.5\\% & 77 \\\\\n & 50 & 92.9\\% & 86.7\\% & 94 \\\\\n\\multicolumn{5}{l}{\\textbf{14 countries}} \\\\\n & 0 & 69.4\\% & 57.1\\% & 40 \\\\\n & 25 & 77.8\\% & 68.6\\% & 64 \\\\\n & 50 & 88.9\\% & 80.0\\% & 75 \\\\\n"
+  ],
+  "table_A2": [
+    "\\multicolumn{5}{l}{\\textbf{17 industries} ($n=83$)} \\\\\n6 & 13.3\\% & 4.8\\% & 3.68 & 4.44 \\\\\n12 & 20.5\\% & 4.8\\% & 6.56 & 8.34 \\\\\n24 & 28.9\\% & 12.0\\% & 15.31 & 49.11 \\\\\n\\multicolumn{5}{l}{\\textbf{14 countries} ($n=35$)} \\\\\n6 & 8.6\\% & 5.7\\% & 1.77 & 0.00 \\\\\n12 & 17.1\\% & 11.4\\% & 10.85 & 26.38 \\\\\n24 & 22.9\\% & 17.1\\% & 17.75 & 43.22 \\\\\n",
+    "17 industries & \\makecell{$7.35$\\\\\\footnotesize$(4.04,\\,19.60)$} & 21.4\\% & 31 \\\\\n30 industries & \\makecell{$11.01$\\\\\\footnotesize$(4.97,\\,20.87)$} & 38.1\\% & 11 \\\\",
+    "\\multicolumn{5}{l}{\\textbf{17 industries}} \\\\\nWinner change (\\%) & 20.2 & 23.2 & 29.8 & 21.4 \\\\\nEndpoint loss $>25$ bp (\\%) & 6.0 & 7.7 & 10.7 & 6.0 \\\\\nMean endpoint loss (bp) & 5.09 & 8.17 & 11.83 & 7.35 \\\\\n\\addlinespace\n\\multicolumn{5}{l}{\\textbf{14 countries}} \\\\\nWinner change (\\%) & 16.7 & 24.3 & 28.6 & 16.7 \\\\\nEndpoint loss $>25$ bp (\\%) & 8.6 & 12.9 & 22.9 & 11.1 \\\\\nMean endpoint loss (bp) & 10.55 & 12.64 & 28.26 & 10.55 \\\\\n",
+    "17 industries & 120 & 84 & 21.4\\% & 6.0\\% & 7.35 \\\\\n17 industries & 60 & 84 & 34.5\\% & 17.9\\% & 35.00 \\\\\n14 countries & 120 & 36 & 16.7\\% & 11.1\\% & 10.55 \\\\\n14 countries & 60 & 36 & 30.6\\% & 22.2\\% & 40.11 \\\\"
+  ],
+  "table_A3": [
+    "Equal weight & 8 & 2/8 & 1.35 & 0/8 \\\\\nSample GMV & 6 & 4/6 & 17.38 & 1/6 \\\\\nLedoit--Wolf GMV & 55 & 7/55 & 5.47 & 2/55 \\\\\nInverse volatility & 12 & 3/12 & 1.59 & 0/12 \\\\\nERC & 3 & 2/3 & --- & 2/3 \\\\",
+    "Equal weight & 0 & --- & --- & --- \\\\\nSample GMV & 22 & 2/22 & 6.50 & 2/22 \\\\\nLedoit--Wolf GMV & 12 & 2/12 & 1.10 & 0/12 \\\\\nInverse volatility & 1 & 1/1 & --- & 1/1 \\\\\nERC & 1 & 1/1 & --- & 1/1 \\\\"
+  ],
+  "table_A4": [
+    "17 industries & Stationary & 2000 & \\makecell{$7.35$\\\\\\footnotesize$(4.04,\\,19.60)$} \\\\\n & Circular block, 12 months & 1000 & \\makecell{$7.35$\\\\\\footnotesize$(3.65,\\,18.14)$} \\\\\n & Circular block, 24 months & 1000 & \\makecell{$7.35$\\\\\\footnotesize$(3.87,\\,19.26)$} \\\\\n14 countries & Stationary & 1000 & \\makecell{$10.55$\\\\\\footnotesize$(2.14,\\,21.42)$} \\\\",
+    "6 & \\makecell{$3.59$\\\\\\footnotesize$(1.54,\\,10.91)$} \\\\\n12 & \\makecell{$7.35$\\\\\\footnotesize$(4.04,\\,19.60)$} \\\\\n24 & \\makecell{$15.31$\\\\\\footnotesize$(9.00,\\,40.23)$} \\\\",
+    "Mean endpoint loss (bp) & \\makecell{$10.55$\\\\\\footnotesize$(2.14,\\,21.42)$} \\\\\nWinner change & \\makecell{16.7\\%\\\\\\footnotesize$(11.1\\%,\\,50.0\\%)$} \\\\\nWinner-change $\\widehat S_{\\mathrm{KM}}(12)$ & \\makecell{69.4\\%\\\\\\footnotesize$(30.6\\%,\\,80.6\\%)$} \\\\\nWinner-change $\\widehat S_{\\mathrm{KM}}(24)$ & \\makecell{57.9\\%\\\\\\footnotesize$(13.9\\%,\\,71.9\\%)$} \\\\\nCorrect selection rate & \\makecell{25.9\\%\\\\\\footnotesize$(0.0\\%,\\,59.3\\%)$} \\\\\nSelection regret (bp) & \\makecell{$48.25$\\\\\\footnotesize$(16.91,\\,221.82)$} \\\\\nMean selector $-$ ensemble CEQ (bp) & \\makecell{$+58.11$\\\\\\footnotesize$(-108.44,\\,80.31)$} \\\\"
+  ],
+  "table_A5": [
+    "Equal weight & None & $w_i=1/N$ \\\\\nSample GMV & Sample covariance & Long-only minimum variance \\\\\nLedoit--Wolf GMV & Ledoit--Wolf covariance & Long-only minimum variance \\\\\nInverse volatility & Sample volatility & $w_i\\propto1/\\hat\\sigma_i$ \\\\\nERC & Sample covariance & Equal risk contributions \\\\",
+    "17 industries ($N=17$) & 1926-07--2026-07 & 1931-07 & 84 & 75 \\\\\n14 countries ($N=14$) & 1975-01--2025-12 & 1980-01 & 36 & 27 \\\\\n30 industries ($N=30$) & 1926-07--2026-07 & 1931-07 & 84 & 75 \\\\"
+  ]
+}

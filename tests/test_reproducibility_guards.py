@@ -8,7 +8,7 @@ from portfolio_endpoint import study
 from portfolio_endpoint.bootstrap import corrected_pw_stationary_block_length
 from portfolio_endpoint.countries import _market_from_text
 from portfolio_endpoint.engine import run_continuous_path
-from portfolio_endpoint.final_publication import format_percentage, replace_table_bodies
+from portfolio_endpoint.qf_tables import format_percentage, replace_table_bodies
 from portfolio_endpoint.ingest import ingest_dataset, parse_value_weighted_monthly
 
 
@@ -92,7 +92,7 @@ def test_default_ingestion_dispatches_country_dat_archive(monkeypatch, tmp_path)
 def test_release_integrity_rejects_modified_frozen_input(tmp_path):
     import hashlib
     import json
-    from portfolio_endpoint.replication_release import verify
+    from portfolio_endpoint.qf_release import verify
     (tmp_path / 'replication').mkdir()
     target = tmp_path / 'frozen.csv'
     target.write_bytes(b'original')

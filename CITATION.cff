@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "Please cite the paper and the versioned replication archive; its DOI will be added after deposit."
+type: software
+title: "Reproducibility of portfolio method comparisons: Terminal-date sensitivity and endpoint loss — scientific code"
+authors:
+  - family-names: Zasadil
+    given-names: Jan
+repository-code: "https://github.com/Aregars2/portfolio-endpoint-reproducibility"
+version: "QF-V4-replication-candidate"

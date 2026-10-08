@@ -18,8 +18,8 @@ import numpy as np
 import pandas as pd
 
 from .analysis import TIE_BREAK_ORDER
-from .final_publication import (
-    final_tables,
+from .qf_tables import (
+    appendix_tables,
     format_basis_points,
     format_percentage,
     format_table_rows,
@@ -85,7 +85,7 @@ def conditional_gap_statistics(pairs: pd.DataFrame) -> dict:
 
 
 def build_qf_tables(root: Path) -> tuple[dict[str, list[str]], dict]:
-    previous, provenance = final_tables(root)
+    previous, provenance = appendix_tables(root)
     pairs, selections, benchmarks, summaries = {}, {}, {}, {}
     for sample, expected in SAMPLES.items():
         folder = root / "results" / expected[0]
@@ -272,7 +272,7 @@ def build_qf_tables(root: Path) -> tuple[dict[str, list[str]], dict]:
                     format(row.mean_loss_ceq_bp, ".2f"),
                 ]
             )
-    a4 = list(previous["table_A5"])
+    a4 = list(previous["table_A4"])
     a4[2] = a4[2].replace("Literal winner change", "Winner change")
     for horizon in (12, 24):
         a4[2] = a4[2].replace(
@@ -285,9 +285,9 @@ def build_qf_tables(root: Path) -> tuple[dict[str, list[str]], dict]:
         "table_2": [t2],
         "table_A1": previous["table_A1"],
         "table_A2": [*previous["table_A2"], phase_body, format_table_rows(window_rows)],
-        "table_A3": previous["table_A4"],
+        "table_A3": previous["table_A3"],
         "table_A4": a4,
-        "table_A5": previous["table_A6"],
+        "table_A5": previous["table_A5"],
     }
     provenance.update(
         {
@@ -514,7 +514,11 @@ def write_audit_report(output: Path, numerical: pd.DataFrame, audit: dict) -> No
             if failures.empty
             else "Printed-value differences are detailed in table_numeric_audit.csv; generated tables use saved results, never submitted numeric literals."
         ),
-        "The manuscript prose, journal class, bibliography, and four figure assets are copied from the V4 ZIP without scientific edits. Figures remain supplied assets; do not assume this exporter regenerates them if data change.",
+        (
+            "The manuscript prose, journal class and bibliography are preserved. All four QF figures are regenerated from frozen saved diagnostics, with full-precision plotting ledgers; no new empirical results."
+            if audit.get("figures_regenerated")
+            else "The manuscript prose, journal class, bibliography, and four figure assets are copied from the V4 ZIP without scientific edits. Figures remain supplied assets; do not assume this exporter regenerates them if data change."
+        ),
         "Original Downloads files, earlier publication outputs, and frozen empirical run directories are unchanged. No portfolio construction, endpoint/robustness analysis, or bootstrap ran. Only lightweight saved-output aggregation and percentile quantiles were evaluated.",
         "This is a paper-code audit, not an independent check of external literature, journal policies, author declarations, or every pixel of the supplied figures.",
         "",
@@ -523,7 +527,9 @@ def write_audit_report(output: Path, numerical: pd.DataFrame, audit: dict) -> No
     (output / "PAPER_CODE_AUDIT.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def assemble(root: Path, template_zip: Path, output: Path) -> None:
+def assemble(
+    root: Path, template_zip: Path, output: Path, *, regenerate_figures: bool = False
+) -> None:
     if output.exists():
         raise FileExistsError(
             "Choose a fresh V4 output directory; existing publication packages are preserved"
@@ -546,13 +552,18 @@ def assemble(root: Path, template_zip: Path, output: Path) -> None:
             "main.bbl",
             "README_QF_OFFICIAL_FORMAT.txt",
         ]
-        assets += ["figures/" + name + ".pdf" for name in FIGURE_NAMES]
+        if not regenerate_figures:
+            assets += ["figures/" + name + ".pdf" for name in FIGURE_NAMES]
         payloads = {name: archive.read(prefix + name) for name in assets}
     output.mkdir(parents=True)
     for name, contents in payloads.items():
         target = output / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(contents)
+    if regenerate_figures:
+        from .qf_figures import render_figures
+
+        render_figures(root, output / "figures")
     (output / "tables").mkdir()
     for name, contents in rendered.items():
         (output / "tables" / (name + ".tex")).write_text(contents, encoding="utf-8")
@@ -561,6 +572,11 @@ def assemble(root: Path, template_zip: Path, output: Path) -> None:
         json.dumps(bodies, indent=2), encoding="utf-8"
     )
     numerical = pd.DataFrame(comparisons)
+    implementation["figures_regenerated"] = regenerate_figures
+    if regenerate_figures:
+        implementation["figures"] = (
+            "Four QF figures regenerated from frozen saved diagnostics; full-precision CSV ledgers saved alongside PDFs. No new empirical analysis."
+        )
     numerical.to_csv(output / "table_numeric_audit.csv", index=False)
     implementation["printed_numeric_discrepancies"] = int((~numerical.matches).sum())
     (output / "PAPER_CODE_AUDIT.json").write_text(
@@ -573,7 +589,11 @@ def assemble(root: Path, template_zip: Path, output: Path) -> None:
             "table_body_counts": {name: len(value) for name, value in bodies.items()},
             "numeric_tokens_compared": len(numerical),
             "printed_numeric_discrepancies": int((~numerical.matches).sum()),
-            "figure_policy": "Copy supplied V4 figures, do not generate new empirical figures",
+            "figure_policy": (
+                "Regenerate four QF figures from frozen saved diagnostics"
+                if regenerate_figures
+                else "Copy supplied V4 figures, do not generate new empirical figures"
+            ),
         }
     )
     (output / "EXPORT_MANIFEST.json").write_text(json.dumps(provenance, indent=2), encoding="utf-8")
@@ -581,7 +601,7 @@ def assemble(root: Path, template_zip: Path, output: Path) -> None:
     (output / "README.md").write_text(
         "# Generated QF V4 publication source\n\nTwo main tables and exactly five appendix tables. "
         "Every numerical table body is generated from frozen outputs; original prose, layouts, "
-        "journal class, bibliography and figure assets are preserved.\n\n"
+        "journal class and bibliography are preserved. Figure provenance is recorded in EXPORT_MANIFEST.json.\n\n"
         "Compile main.tex and supplemental_material.tex with pdfLaTeX. The supplied main.bbl "
         "can be reused, or rebuild with bibtex main. Run pdfLaTeX twice for references.\n\n"
         "Regenerate from the repository with:\n\n"
@@ -598,11 +618,19 @@ def assemble(root: Path, template_zip: Path, output: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source-zip", type=Path, required=True)
+    parser.add_argument(
+        "--source-zip", type=Path, default=project_root() / "replication/qf_source_template.zip"
+    )
+    parser.add_argument("--regenerate-figures", action="store_true")
     parser.add_argument("--output-dir", type=Path)
     args = parser.parse_args()
     root = project_root()
-    assemble(root, args.source_zip, args.output_dir or root / "results/publication_qf_v4_generated")
+    assemble(
+        root,
+        args.source_zip,
+        args.output_dir or root / "results/publication_qf",
+        regenerate_figures=args.regenerate_figures,
+    )
 
 
 if __name__ == "__main__":
