@@ -1,10 +1,13 @@
-# Local candidate, not yet a public deposit
+# Paper release status
 
-- License selection is pending author approval; no license is assigned automatically.
-- French data redistribution terms must be checked before uploading raw archives.
-- DOI is pending an actual Zenodo deposit; CITATION.cff has no invented DOI.
-- Historical Git history is unchanged. Legacy utilities are omitted only from
-  this archival payload, after checking active import dependencies.
-- Tables and figure objects use the frozen saved inputs; no new simulations.
-- The supplied QF journal preamble is preserved and has a known local TeX Live
-  compatibility failure. This does not affect standalone table or figure generation.
+The repository version is 1.0.0; code is MIT licensed. Generated Tables 1, 2 and A1-A7 are committed and checked against deterministic reproduction. The frozen input inventory includes the monthly CEQs and continuous net paths needed for A6/A7. Unreported selector/frontier experiments are outside the publication archive.
+
+A local annotated submission tag and companion ZIP identify this code snapshot. A tag alone is not a public data deposit. The companion ZIP contains frozen third-party French data and journal source files; their rights are separate from MIT. The existing raw-data redistribution question remains unresolved, so the local ZIP must not be described as publicly available.
+
+## Remaining external steps
+
+1. Authenticate GitHub CLI (`gh auth login`) and push the commit and submission tag.
+2. Create the GitHub release using `replication/RELEASE_NOTES.md`. Publish a companion download only after resolving third-party redistribution, or provide a permitted alternative carrying exact frozen identities.
+3. Archive the release on Zenodo, obtain the actual DOI, then update CITATION.cff and the README with that DOI and the companion download URL.
+
+No GitHub release, Zenodo deposit or DOI is claimed until those operations succeed. The source-only GitHub ZIP cannot reproduce the paper without the companion.

@@ -32,6 +32,10 @@ MODULES = (
     "qf_publication",
     "qf_tables",
     "qf_release",
+    "supplement_inputs",
+    "change_return",
+    "ceq_component_decomposition",
+    "plot_gap_perturbation",
     "study",
 )
 EXCLUDED_MODULES = (
@@ -150,7 +154,13 @@ def build(root: Path, source_zip: Path, target: Path) -> None:
     }
     for path in sorted((root / "tests").glob("test_*.py")):
         payloads[path.relative_to(root).as_posix()] = path.read_bytes()
+    for path in sorted((root / "tests/fixtures").rglob("*")):
+        if path.is_file():
+            payloads[path.relative_to(root).as_posix()] = path.read_bytes()
     for path in sorted((root / "audits").rglob("*")):
+        if path.is_file():
+            payloads[path.relative_to(root).as_posix()] = path.read_bytes()
+    for path in sorted((root / "generated").glob("*")):
         if path.is_file():
             payloads[path.relative_to(root).as_posix()] = path.read_bytes()
     inventory = json.loads((root / "replication/qf_input_manifest.json").read_text())
@@ -158,6 +168,8 @@ def build(root: Path, source_zip: Path, target: Path) -> None:
         payloads[name] = manifest_target(root, name).read_bytes()
     for name in (
         "requirements-frozen.txt",
+        ".gitattributes",
+        "replication/RELEASE_NOTES.md",
         "SCIENTIFIC_CORE.md",
         "QF_V4_PUBLICATION.md",
         "config/experiment.yaml",
@@ -165,6 +177,10 @@ def build(root: Path, source_zip: Path, target: Path) -> None:
         "replication/qf_reference_table_bodies.json",
         "replication/frozen_run_registry.json",
         "scripts/reproduce_qf.py",
+        "scripts/reproduce_publication.py",
+        "scripts/build_supplement_A6_A7.py",
+        "scripts/validate_publication_results.py",
+        ".python-version",
         "data/README.md",
         "CITATION.cff",
         "replication/QF_RELEASE_README.md",
@@ -181,8 +197,8 @@ def build(root: Path, source_zip: Path, target: Path) -> None:
         payloads["LICENSE"] = (root / "LICENSE").read_bytes()
     assert_dependency_closure(payloads)
     manifest = {
-        "release": "QF-V4-replication-candidate",
-        "scope": "Local, paper-specific frozen replication candidate; not deposited",
+        "release": "v1.0.0-paper-submission",
+        "scope": "Local frozen submission companion; not publicly deposited",
         "excluded_modules": list(EXCLUDED_MODULES),
         "files": {
             name: hashlib.sha256(data).hexdigest() for name, data in sorted(payloads.items())

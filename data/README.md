@@ -1,11 +1,11 @@
 # Frozen paper inputs
 
-Git stores code and metadata, not raw/processed data or completed simulations.
+Git stores code, metadata, generated LaTeX and small supplemental validation fixtures, not raw/processed market data or completed simulations.
 The local QF replication candidate supplies the three exact French ZIP snapshots,
 their processed panels, and the saved scientific outputs required by the exporter.
 Never replace those files with current downloads when reproducing the paper.
 
-`replication/qf_input_manifest.json` pins all 49 required inputs by checksum.
+`replication/qf_input_manifest.json` pins all 54 required inputs by checksum.
 Country returns are the broader USD value-weighted Mkt series (all four valuation
 ratios not required), balanced from January 1975; coverage depends on B/M data.
 The U.S. industry panels cover July 1926-July 2026; countries cover January

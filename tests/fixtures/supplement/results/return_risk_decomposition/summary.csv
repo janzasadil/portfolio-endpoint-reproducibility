@@ -1,0 +1,5 @@
+universe,subset,n,delta_mean_mean_bp,delta_mean_median_bp,delta_risk_mean_bp,delta_risk_median_bp,return_positive_risk_negative_count,return_positive_risk_negative_share,risk_positive_return_negative_count,risk_positive_return_negative_share,both_positive_count,both_positive_share,both_negative_count,both_negative_share,zero_component_boundary_count,zero_component_boundary_share,absolute_mean_dominates_count,absolute_mean_dominates_share
+17_industries,all_winner_changes,18,53.54370076455996,20.69180934906401,16.528877927271704,1.0094848975302266,9,0.5,0,0.0,9,0.5,0,0.0,0,0.0,16,0.8888888888888888
+17_industries,loss_gt25bp,5,129.10852115761537,152.53900379669435,60.512010259429005,65.07432748257393,0,0.0,0,0.0,5,1.0,0,0.0,0,0.0,4,0.8
+14_countries,all_winner_changes,6,97.48148625119939,80.54279830938133,28.96144119677449,10.907998279652062,1,0.16666666666666666,0,0.0,5,0.8333333333333334,0,0.0,0,0.0,5,0.8333333333333334
+14_countries,loss_gt25bp,4,129.7755225120336,120.30645879379405,38.590214463770415,38.560536823494175,1,0.25,0,0.0,3,0.75,0,0.0,0,0.0,3,0.75

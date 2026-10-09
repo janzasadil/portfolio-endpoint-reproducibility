@@ -1,10 +1,6 @@
-# QF V4 frozen replication candidate
+# Frozen paper replication package
 
-This paper-specific package excludes legacy FRL publication machinery and its
-near-tie, post-referee and old reporting utilities. Historical audits remain as
-clearly labeled provenance. See RELEASE_STATUS.md before any public deposit.
-
-Use Python 3.13.3 and the recorded numerical environment:
+Restore the companion archive into an empty directory, then use Python 3.13.3:
 
 ```powershell
 python -m venv .venv
@@ -12,28 +8,13 @@ python -m venv .venv
 python -m pip install -r requirements-frozen.txt
 python -m pip install --no-deps --no-build-isolation -e .
 python -m pytest -q
-python scripts/reproduce_qf.py
+python scripts/reproduce_publication.py
 ```
 
-The last command checks archived file/input checksums, regenerates Tables 1, 2
-and A1-A5 plus all four figure PDFs, and verifies the table bodies against the
-frozen V4 reference and all 342 printed numerical tokens against the submitted
-source. Output: `results/reproduced_qf/`. Choose a new `--output-dir` to repeat;
-existing output directories are never overwritten.
+The single command verifies the 54 frozen inputs, recomputes A6/A7 from saved monthly CEQs and continuous net paths, and generates Tables 1, 2, A1-A7 and Figures 1, 2, A1, A2 in `results/reproduced_publication/`. It checks all nine LaTeX files byte for byte against `generated/`, the seven core bodies against the archived reference, and all printed core values against the submitted source. It adds native A6/A7 inputs to the supplement.
 
-No data download, portfolio construction, endpoint/robustness recomputation or
-bootstrap is performed by this command. Figure CSV ledgers retain full-precision
-plotted values. Numerical identity is required; binary-identical PDFs and identical
-fonts across systems are not promised. The full journal manuscript has a known
-local LaTeX compatibility issue; table/figure reproduction is distinct from
-full-manuscript compilation.
+No download, portfolio reconstruction or bootstrap runs. Use a fresh `--output-dir` to repeat. The optional `--gap-scatter` renders an additional diagnostic without inserting it into the paper. PDFs are visual outputs, not table sources. The supplied journal class has a known current-LaTeX compatibility issue documented in QF_V4_PUBLICATION.md.
 
-Completed bootstrap counts: primary stationary B=2,000; country, 30-industry and
-each 12/24-month circular-block sensitivity B=1,000. No inner bootstrap ran.
-The B=5,000 / inner B=2,000 fields in `config/experiment.yaml` preserve the
-**planned / protocol configuration, not executed bootstrap replication counts**.
-The historical resolved run registry is provenance, not an assertion that old
-source hashes match this later export code.
+The code-only repository lacks the companion inputs and external journal ZIP; tests use small committed fixtures. MIT applies to code, not French datasets or journal files. Read QF_RELEASE_STATUS.md before a public deposit. No DOI or public companion download is claimed.
 
-See data/README.md, audits/README.md, QF_V4_PUBLICATION.md and SCIENTIFIC_CORE.md.
-The companion ZIP is local until deposited; no DOI/public availability is claimed.
+Historical executed bootstrap counts are preserved in `replication/frozen_run_registry.json`: primary stationary B=2000; country, 30-industry and each fixed-block sensitivity B=1000. Protocol configuration is not a claim of completed replication counts.

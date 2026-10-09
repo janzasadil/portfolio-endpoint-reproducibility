@@ -1,6 +1,6 @@
 # QF V4 table generation
 
-Generate Tables 1, 2 and A1-A5 from existing frozen outputs. No portfolio
+The current one-command paper path is `python scripts/reproduce_publication.py`: it generates Tables 1, 2 and A1-A7 plus four core figures and verifies all nine committed LaTeX files. The core exporter below generates Tables 1, 2 and A1-A5 from existing frozen outputs. No portfolio
 construction, endpoint analysis, robustness run or bootstrap is performed.
 The submitted V4 ZIP supplies formatting, prose and bibliography, not numerical
 table bodies. A preservation mode copies static figures for comparison; the
@@ -70,3 +70,30 @@ does not claim pixel- or byte-identical PDFs across plotting-library versions.
 Without `--regenerate-figures`, the exporter preserves the supplied figure assets.
 Frozen results, original submitted documents and earlier publication bundles are
 unchanged. No FRL, near-tie or post-referee input is required by the QF pipeline.
+
+
+## Supplemental Tables A6 and A7
+
+After exporting the core QF package, extend it from saved diagnostics:
+
+```powershell
+python scripts/build_supplement_A6_A7.py --output-dir results/publication_qf_v4_generated
+```
+
+Use the actual package directory for a fresh reproduction. This deterministic
+exporter reads results/change_and_return/{summary,origins}.csv and
+results/return_risk_decomposition/{summary,observations}.csv, validates printed
+counts and medians against individual records, and generates full native LaTeX
+tables with titles, notes and labels. It adds the A6/A7 inputs after A5 in
+supplemental_material.tex when that manuscript exists. It preserves A1-A5.
+
+Generated tables carry a do-not-edit header and source paths.
+SUPPLEMENT_A6_A7_MANIFEST.json records deterministic input, generator and output
+SHA-256 hashes. The standalone preview and its PDF are visual QA artifacts;
+the manuscript uses the generated .tex files directly. No PDF table is inserted.
+
+Validate deterministic regeneration and rejection of inconsistent saved inputs:
+
+```powershell
+python -m pytest tests/test_supplement_A6_A7.py
+```

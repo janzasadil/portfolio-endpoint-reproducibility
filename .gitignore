@@ -23,3 +23,6 @@ output/
 tmp/
 # Frozen publication templates are distributed inside the release archive.
 replication/frozen_source.zip
+
+# Journal template is an external companion asset.
+replication/qf_source_template.zip

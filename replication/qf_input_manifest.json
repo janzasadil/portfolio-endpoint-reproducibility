@@ -1,5 +1,5 @@
 {
-  "scope": "Frozen QF V4 input inventory; captured saved-output reads, plus exact raw archives and country parsing provenance",
+  "scope": "Frozen QF V4 and A6/A7 inputs: saved CEQs, continuous net paths, diagnostic origin audits and exact raw snapshots",
   "files": {
     "data/processed/ff_17_industry_value_weighted_monthly.csv": "33a3dc25c6ad938495ee553d674bfb963d0252581bd4a48fd2db7c9f00e244b3",
     "data/processed/ff_30_industry_value_weighted_monthly.csv": "bef2e1d5bba9e3eba4766d08aa1f68792dd3f8335a0728bbd93a6c0fdc2148cd",
@@ -49,6 +49,11 @@
     "results/replication_30_B1000/endpoint_pairs.csv": "10bf5984c25f3c097f8c48f1a2d4c439ca61a1c140eeaf83ebbe129d9a9aa5ed",
     "results/replication_30_B1000/ex_ante_selection.csv": "4aa9efe4a671b0c793606f5ba5a88e5395e14b1f270ab2f7be6ea5d0b4bd1fd3",
     "results/replication_30_B1000/outer_bootstrap.csv": "c6040b0490477c47b86b7816381242cc763e1ddf401b7ee518e48682bed47cc4",
-    "results/replication_30_B1000/summary.json": "ec13992f519a798b6c26caf5d55ace8f2a126aa467bcbe11e9ab8352817a6ce1"
+    "results/replication_30_B1000/summary.json": "ec13992f519a798b6c26caf5d55ace8f2a126aa467bcbe11e9ab8352817a6ce1",
+    "results/gap_perturbation_diagnostic/winner_change_audit_all_pairs.csv": "02ab085d246f1a745a3ad621d083e226835e236b96fac37f06e77a7ac2e28a8a",
+    "results/calendar_window_robustness/17_industries_continuous_net_returns.csv": "e7ecc05ad9f9710753a123138d1f3b178e8f8d8a428d53250bd5b669f0f07297",
+    "results/calendar_window_robustness/14_countries_continuous_net_returns.csv": "336430d706983df83d0f23653fac2dc5a63b4241d9af963c0477250ced6b5093",
+    "results/extension/primary17_literal_origin_audit.csv": "ff81c4859634022dc85450d8740388b9ceb363a19982aed9a64735511e39df01",
+    "results/extension/primary17_material25_origin_audit.csv": "21c5876b04396be1dda8ed51b63169e80dc1cb2c4dfb5fee664a65ebf8085ee4"
   }
 }

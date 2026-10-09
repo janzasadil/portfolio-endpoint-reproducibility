@@ -5,5 +5,7 @@ title: "Reproducibility of portfolio method comparisons: Terminal-date sensitivi
 authors:
   - family-names: Zasadil
     given-names: Jan
-repository-code: "https://github.com/Aregars2/portfolio-endpoint-reproducibility"
-version: "QF-V4-replication-candidate"
+repository-code: "https://github.com/janzasadil/portfolio-endpoint-reproducibility"
+version: "1.0.0"
+date-released: "2026-10-09"
+license: MIT
