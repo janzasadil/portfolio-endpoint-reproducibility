@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from .ingest import project_root
 
 import numpy as np
 import pandas as pd
 
-from .analysis import TIE_BREAK_ORDER, _winner, ceq
+from .analysis import TIE_BREAK_ORDER, ceq
 
 from .supplement_inputs import ATOL, SAMPLES, read_frozen
 
@@ -60,8 +61,8 @@ def reversal_points(inputs):
     return pd.DataFrame(records)
 
 
-def return_risk(root, inputs, points):
-    output = root / "results/return_risk_decomposition"
+def return_risk(root, inputs, points, *, output=None):
+    output = Path(output) if output is not None else root / "results/return_risk_decomposition"
     records, checks = [], []
     for universe, (_, _, baseline) in inputs.items():
         cache = root / f"results/calendar_window_robustness/{universe}_continuous_net_returns.csv"
@@ -79,7 +80,7 @@ def return_risk(root, inputs, points):
         ):
             raise ValueError("Net-return cache incomplete")
         max_residual = 0.0
-        # Validate all eligible primary endpoint CEQs, not just the reversals.
+        # Validate all eligible primary endpoint CEQs, not just the winner changes.
         for _, row in baseline.iterrows():
             for when in ("earlier", "later"):
                 pos = returns.index.get_indexer([pd.Timestamp(row[f"{when}_endpoint"])])[0]
@@ -178,7 +179,7 @@ def return_risk(root, inputs, points):
     details.to_csv(output / "observations.csv", index=False)
     summary.to_csv(output / "summary.csv", index=False)
     lines = [
-        "# Return-versus-risk decomposition of CEQ reversals",
+        "# Return-versus-risk decomposition of CEQ winner changes",
         "",
         "H=120, h=12, gamma=5; only observed winner-change pairs. Reuse cached continuous NET return paths with frozen within-method costs. No portfolio construction or bootstrap. At both endpoints, Dmu=12(mean_shifted_method-mean_initial_method) and Drisk=-30(var_shifted_method-var_initial_method), with monthly sample variance ddof=1. The shifted method is held fixed in both windows; it is not replaced by each window's best.",
         "",
@@ -203,7 +204,7 @@ def return_risk(root, inputs, points):
         )
     lines += [
         "",
-        "All components are annualized CEQ bp. Exact zero components are a separate boundary category rather than silently assigned a sign. Material-loss subsets contain only five industry reversals and four country reversals: these are individual-observation descriptions, not reliable population comparisons.",
+        "All components are annualized CEQ bp. Exact zero components are a separate boundary category rather than silently assigned a sign. Material-loss subset sizes are reported in the table; small subsets describe individual observations and do not establish reliable population comparisons.",
         "",
         "## Validation and scope",
         "",
@@ -212,11 +213,11 @@ def return_risk(root, inputs, points):
         "",
         f"Maximum delta identity residual: {details.delta_identity_residual.abs().max():.3g}; maximum shifted loss identity residual: {details.loss_identity_residual.abs().max():.3g}, in native annualized CEQ units. Initial relative component sums also match minus the saved gap. All {len(details)} individual observations, components and residuals remain visible in observations.csv.",
         "",
-        "## Interpretation and recommendation",
+        "## Interpretation and limitations",
         "",
         "The components describe changes in relative net-return and variance performance, not causal mechanisms or attribution to entering/leaving months. Offsetting components are interpreted using signs and absolute magnitudes, never unstable component/loss contribution ratios.",
         "",
-        "**Moderately informative; add to supplement.** Relative net-mean improvements accompany every observed reversal in both samples. Their absolute magnitude exceeds the variance component in 16/18 industry reversals and 5/6 country reversals; mean/median return-component changes are 53.54/20.69 bp and 97.48/80.54 bp, respectively. Risk changes are heterogeneous: they oppose the new winner in half of industry reversals (9/18), but favor it jointly with return changes in the other half; countries show joint improvements in 5/6 cases and offsetting risk in 1/6. For material-loss reversals, both components favor the shifted winner in all five industry cases and three of four country cases, while the absolute return component is larger in four and three cases, respectively. This adds an economic description beyond CEQ totals, but the small samples, conditioning on realized reversals, and net-return convention limit broader claims; it is not causal attribution.",
+        "Sign patterns, component magnitudes and subset counts above are computed from this run. Conditioning on realized winner changes and the net-return convention limit broader interpretations.",
         "",
     ]
     (output / "REPORT.md").write_text("\n".join(lines), encoding="utf-8")
@@ -227,8 +228,8 @@ def return_risk(root, inputs, points):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[2])
-    root = parser.parse_args().root
+    parser.add_argument("--root", type=Path, default=None)
+    root = project_root(parser.parse_args().root)
     inputs = read_frozen(root)
     return_risk(root, inputs, reversal_points(inputs))
 

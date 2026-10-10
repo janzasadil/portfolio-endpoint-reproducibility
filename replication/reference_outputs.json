@@ -1,0 +1,24 @@
+{
+  "description": "All nine canonical table bytes; underlying frozen numerical and observation-level validations are separate",
+  "tables": {
+    "table_1.tex": "05a6d87f2da4bfe0926fcb3e05c80e7d5f3e379bdb4a2601af658e0f4ca603d2",
+    "table_2.tex": "84c2858f4a1ee09b26a3c1a6754380650e7106a29913a392c716cd9b29005d10",
+    "table_A1.tex": "c28f7a19bd6d4ec6ce58f1d815714f3978aed014e03a5eb565345689a5468d8f",
+    "table_A2.tex": "a486dd69c5809d9150b2404155f3774f84380ec4e79f2c87104e57e8f85b056e",
+    "table_A3.tex": "b0c10326ba1019668068061091f77cb3c7addb5df963a11cca4b7af95d2fc0e6",
+    "table_A4.tex": "df442c9e23811017b3e40ca95a80df28a4aad6401ca6fa1f5917606124181fbb",
+    "table_A5.tex": "39c90d5285737ab60b192855d4ee0417545cfd7416f5a8a2c365a602431ffcd3",
+    "table_A6.tex": "e0f0e57bb244b453ac4078c7730a82c93bf55fd48fcfc8648b2a6f1ec40a9f95",
+    "table_A7.tex": "cdcfc5de2d87083dad98f38054bdd5ba2298f578f1c7b3c0f0ed6fe803a149c0"
+  },
+  "design_headlines": {
+    "universe": "17_industries",
+    "n_pairs": 84,
+    "switch_count": 18,
+    "loss_gt25_count": 5,
+    "switch_rate_pct": "21.4",
+    "loss_gt25_rate_pct": "6.0",
+    "mean_loss_ceq_bp": "7.35"
+  },
+  "executed_run_registry_sha256": "a899b62c5ee0d43b7a2f87e3882f2516437c82082ad259a3998238e5bc46bc33"
+}

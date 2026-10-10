@@ -1,4 +1,4 @@
-"""Regenerate the four QF V4 figures from frozen saved diagnostics.
+"""Regenerate the four publication figures from frozen saved diagnostics.
 
 No portfolio construction, CEQ estimation, endpoint analysis or resampling.
 CSV ledgers preserve every plotted numerical value before display rounding.

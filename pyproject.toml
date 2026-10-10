@@ -8,8 +8,10 @@ version = "1.0.0"
 description = "Reproducible portfolio endpoint experiment"
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = ">=3.11"
+requires-python = ">=3.13.3,<3.14"
+authors = [{name = "Jan Zasadil"}]
 dependencies = [
+  "numpy>=2.3",
   "pandas>=2.1",
   "PyYAML>=6.0",
   "scikit-learn>=1.4",
@@ -18,28 +20,22 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.6"]
+dev = ["pytest>=9.1"]
 
 [project.scripts]
 portfolio-ingest = "portfolio_endpoint.ingest:main"
 portfolio-study = "portfolio_endpoint.study:main"
 portfolio-diagnostics = "portfolio_endpoint.diagnostics:main"
-portfolio-report = "portfolio_endpoint.reporting:main"
 portfolio-countries = "portfolio_endpoint.countries:main"
 portfolio-extension = "portfolio_endpoint.extension:main"
-portfolio-country-bootstrap-report = "portfolio_endpoint.country_bootstrap_report:main"
-portfolio-frl-publication = "portfolio_endpoint.frl_publication:main"
 portfolio-qf-publication = "portfolio_endpoint.qf_publication:main"
-portfolio-post-referee = "portfolio_endpoint.post_referee:main"
-portfolio-near-tie = "portfolio_endpoint.near_tie:main"
+
+[project.urls]
+Repository = "https://github.com/janzasadil/portfolio-endpoint-reproducibility"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-
-[tool.ruff]
-line-length = 100
-target-version = "py311"
 
 [tool.setuptools.packages.find]
 where = ["src"]

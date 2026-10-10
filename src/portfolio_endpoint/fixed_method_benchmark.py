@@ -167,16 +167,16 @@ def benchmark_selection(
     return base_rates, fixed_regrets, summary, ties, decisions
 
 
-def validate_headlines(summary: dict, saved_summary: dict, expected: tuple) -> None:
+def validate_headlines(summary: dict, saved_summary: dict, expected: tuple, *, check_reference=True) -> None:
     """Check rounded manuscript values and exact frozen numerical summaries."""
     _, count, hit_percent, regret_bp = expected
-    if summary["n_decisions"] != count:
+    if check_reference and summary["n_decisions"] != count:
         raise ValueError(
             f"Decision count mismatch: expected {count}, found {summary['n_decisions']}"
         )
-    if f"{100 * summary['preceding_winner_hit_rate']:.1f}" != hit_percent:
+    if check_reference and f"{100 * summary['preceding_winner_hit_rate']:.1f}" != hit_percent:
         raise ValueError("Correct-selection headline does not reproduce")
-    if f"{summary['preceding_winner_mean_regret_bp']:.2f}" != regret_bp:
+    if check_reference and f"{summary['preceding_winner_mean_regret_bp']:.2f}" != regret_bp:
         raise ValueError("Mean selection-regret headline does not reproduce")
     for actual, reference in (
         (summary["preceding_winner_hit_rate"], saved_summary["selector_hit_rate"]),

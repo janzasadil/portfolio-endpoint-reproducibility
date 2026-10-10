@@ -26,7 +26,7 @@ from .ingest import project_root
 
 
 def _load_dataset(root, key):
-    config = yaml.safe_load((root / "config/experiment.yaml").read_text())
+    config = yaml.safe_load((root / "config/paper_design.yaml").read_text())
     settings = config["study"]
     dataset = config["datasets"][key]
     returns = pd.read_csv(
@@ -153,6 +153,7 @@ def _leave_one_out(returns, settings):
     """Rebuild the frozen portfolio rules after omitting each asset in turn."""
     rows = []
     for asset in returns.columns:
+        print(f"Leave-one-out [N={returns.shape[1]}]: omitting {asset}", flush=True)
         paths = run_headline_paths(returns.drop(columns=asset), 60, 0.0025)
         endpoint_pairs, monthly_winners, literal_survival, _, _ = (
             _compute_baseline_statistics(paths, settings)
@@ -228,11 +229,12 @@ def _write_universe_results(
     return paths, endpoint_pairs, monthly_winners
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser()
+    parser.add_argument("--root", type=Path, default=None)
     parser.add_argument("--output-dir", type=Path)
-    args = parser.parse_args()
-    root = project_root()
+    args = parser.parse_args(argv)
+    root = project_root(args.root)
     output_dir = args.output_dir or root / "results/extension"
     output_dir.mkdir(parents=True, exist_ok=True)
     primary_paths, primary_endpoint_pairs, primary_monthly_winners = (

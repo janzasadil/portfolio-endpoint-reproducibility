@@ -205,12 +205,12 @@ def _save_survival_figure(curves: dict[str, pd.DataFrame], path: Path) -> None:
     plt.close(fig)
 
 
-def run_diagnostics(output_dir: Path | None = None) -> Path:
+def run_diagnostics(output_dir: Path | None = None, *, root: Path | None = None) -> Path:
     """Run the requested deterministic audit and write self-contained outputs."""
-    root = project_root()
+    root = project_root(root)
     output_dir = output_dir or root / "results" / "diagnostics"
     output_dir.mkdir(parents=True, exist_ok=True)
-    with (root / "config" / "experiment.yaml").open(encoding="utf-8") as handle:
+    with (root / "config" / "paper_design.yaml").open(encoding="utf-8") as handle:
         config = yaml.safe_load(handle)
     study = config["study"]
     horizon, gamma, cost = study["evaluation_horizon_months"], study["ceq_risk_aversion"], study["transaction_cost_per_half_turnover"]

@@ -83,7 +83,7 @@ def test_default_ingestion_dispatches_country_dat_archive(monkeypatch, tmp_path)
     archive.parent.mkdir(parents=True)
     with zipfile.ZipFile(archive, 'w') as zipped:
         zipped.writestr('Austrlia.Dat', 'Value-Weight Dollar Returns      All 4 Data Items Not Reqd\n197501 1\n197502 2\n')
-    ingest_dataset('countries', {'raw_file': archive.name, 'processed_file': 'countries.csv'}, tmp_path)
+    ingest_dataset('countries', {'raw_file': archive.name, 'processed_file': 'countries.csv', 'parser': 'international_countries'}, tmp_path)
     panel = pd.read_csv(tmp_path / 'data/processed/countries.csv')
     assert panel.Australia.tolist() == [.01, .02]
     assert (tmp_path / 'results/country_extension/country_data_audit.json').exists()

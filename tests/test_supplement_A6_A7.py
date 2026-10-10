@@ -1,15 +1,12 @@
 """Verify reproducibility and source validation for the supplemental exporter."""
-import importlib.util
 from pathlib import Path
 import shutil
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("supplement_export", ROOT / "scripts/build_supplement_A6_A7.py")
 FIXTURES = ROOT / "tests/fixtures/supplement"
-exporter = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(exporter)
+from portfolio_endpoint import supplement_tables as exporter
 
 
 def test_supplement_build_is_deterministic_and_includes_native_tables(tmp_path):
@@ -23,7 +20,7 @@ def test_supplement_build_is_deterministic_and_includes_native_tables(tmp_path):
     second = {p.relative_to(output): p.read_bytes() for p in output.rglob("*") if p.is_file()}
     assert first == second
     for name in ("table_A6", "table_A7"):
-        assert manuscript.read_text().count("\\input{tables/" + name + ".tex}") == 1
+        assert manuscript.read_text() == "\\input{tables/table_A5.tex}\n\\end{document}\n"
         generated = (output / "tables" / (name + ".tex")).read_text()
         assert generated.startswith("% AUTO-GENERATED FILE. DO NOT EDIT BY HAND.\n")
         approved = (ROOT / "generated" / (name + ".tex")).read_text()

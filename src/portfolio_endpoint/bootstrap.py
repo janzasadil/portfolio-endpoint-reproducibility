@@ -123,7 +123,7 @@ def stationary_resample(
 def outer_bootstrap(
     returns: pd.DataFrame,
     *,
-    replications: int = 5000,
+    replications: int,
     seed: int = 20260909,
     lookback: int = 60,
     transaction_cost: float = 0.0025,
@@ -197,7 +197,7 @@ def _draw_metrics(paths: dict[str, PathResult], horizon: int, displacement: int,
 def outer_sensitivity_bootstrap(
     returns: pd.DataFrame,
     *,
-    replications: int = 2000,
+    replications: int,
     seed: int = 20260909,
     lookback: int = 60,
     transaction_cost: float = 0.0025,
@@ -256,47 +256,3 @@ def percentile_interval(samples: pd.Series | np.ndarray, level: float = 0.95) ->
         raise ValueError("Percentile interval requires finite bootstrap samples")
     alpha = (1.0 - level) / 2.0
     return float(np.quantile(values, alpha)), float(np.quantile(values, 1.0 - alpha))
-
-
-def _winner_at_last_endpoint(paths, horizon: int, gamma: float) -> str:
-    candidates = candidate_return_matrix(paths)
-    if len(candidates) < horizon:
-        raise ValueError("Insufficient master OOS path before endpoint")
-    scores = {name: ceq(candidates[name].iloc[-horizon:], gamma) for name in TIE_BREAK_ORDER}
-    return min(TIE_BREAK_ORDER, key=lambda name: (-scores[name], TIE_BREAK_ORDER.index(name)))
-
-
-def inner_winner_stability(
-    returns_through_endpoint: pd.DataFrame,
-    *,
-    replications: int = 2000,
-    seed: int = 20260909,
-    lookback: int = 60,
-    horizon: int = 120,
-    transaction_cost: float = 0.0025,
-    gamma: float = 5.0,
-) -> dict[str, float | int | str]:
-    """Compute endpoint-specific, full-procedure bootstrap winner stability.
-
-    `returns_through_endpoint` must contain only information available at the
-    endpoint. Its block length is intentionally re-estimated here, and this
-    routine must never be called inside `outer_bootstrap`.
-    """
-    if replications < 1:
-        raise ValueError("At least one inner replication is required")
-    original_paths = run_headline_paths(returns_through_endpoint, lookback, transaction_cost)
-    original_winner = _winner_at_last_endpoint(original_paths, horizon, gamma)
-    block_length = protocol_block_length(returns_through_endpoint.to_numpy())
-    rng = np.random.default_rng(seed)
-    matching_winners = 0
-    for _ in range(replications):
-        pseudo_returns = stationary_resample(returns_through_endpoint, block_length, rng)
-        pseudo_paths = run_headline_paths(pseudo_returns, lookback, transaction_cost)
-        matching_winners += _winner_at_last_endpoint(pseudo_paths, horizon, gamma) == original_winner
-    return {
-        "endpoint": str(returns_through_endpoint.index[-1].date()),
-        "winner": original_winner,
-        "block_length": block_length,
-        "replications": replications,
-        "winner_stability": matching_winners / replications,
-    }

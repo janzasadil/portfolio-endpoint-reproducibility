@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from .ingest import project_root
 
 import numpy as np
 import pandas as pd
 
-from .analysis import TIE_BREAK_ORDER, _winner, ceq
+from .analysis import _winner
 
 from .supplement_inputs import SAMPLES, read_frozen
 
@@ -24,8 +25,8 @@ def change_return_categories(changed, losses, threshold=0.0025):
     return literal, material
 
 
-def change_and_return(root, inputs):
-    output = root / "results/change_and_return"
+def change_and_return(root, inputs, *, output=None):
+    output = Path(output) if output is not None else root / "results/change_and_return"
     records, summaries, validations = [], [], []
     for universe, (panel, full, _) in inputs.items():
         label, prefix, _ = SAMPLES[universe]
@@ -99,12 +100,18 @@ def change_and_return(root, inputs):
                 column = "material_category" if category.endswith("25") else "literal_category"
                 count = int((group[column] == category).sum())
                 row[f"{category}_count"], row[f"{category}_share"] = count, count / n
-            assert row["A_count"] + row["B_count"] + row["C_count"] == n
-            assert row["A25_count"] + row["B25_count"] + row["C25_count"] == n
-            assert row["B_count"] + row["C_count"] == int(group.first_change_within_h.sum())
-            assert row["B25_count"] + row["C25_count"] == int(group.first_gt25_within_h.sum())
-            assert row["C_count"] == int(pairs.reported_winner_change.sum())
-            assert row["C25_count"] == int((pairs.endpoint_loss > 0.0025).sum())
+            if not (row["A_count"] + row["B_count"] + row["C_count"] == n):
+                raise ValueError("Saved-result identity validation failed")
+            if not (row["A25_count"] + row["B25_count"] + row["C25_count"] == n):
+                raise ValueError("Saved-result identity validation failed")
+            if not (row["B_count"] + row["C_count"] == int(group.first_change_within_h.sum())):
+                raise ValueError("Saved-result identity validation failed")
+            if not (row["B25_count"] + row["C25_count"] == int(group.first_gt25_within_h.sum())):
+                raise ValueError("Saved-result identity validation failed")
+            if not (row["C_count"] == int(pairs.reported_winner_change.sum())):
+                raise ValueError("Saved-result identity validation failed")
+            if not (row["C25_count"] == int((pairs.endpoint_loss > 0.0025).sum())):
+                raise ValueError("Saved-result identity validation failed")
             for suffix in ("", "25"):
                 denominator = row[f"B{suffix}_count"] + row[f"C{suffix}_count"]
                 row[f"returned_among_events{suffix}_count"] = row[f"B{suffix}_count"]
@@ -147,9 +154,9 @@ def change_and_return(root, inputs):
         "",
         "No aggregate subtraction was used to infer recovery: every category was built from each origin's monthly winner identities and CEQs. C and C25 reproduce the endpoint counts on exactly the same origins; B+C and B25+C25 reproduce first-failure events on those origins. Recent censored origins without complete follow-up are excluded, not scored as uninterrupted persistence. Reported deterministic identities use the frozen five-method order.",
         "",
-        "## Interpretation and recommendation",
+        "## Interpretation and limitations",
         "",
-        "**Moderately informative; add to supplement.** A meaningful fraction of first failures is no longer present at the fixed later horizon. This explicitly reconciles first-passage durability with endpoint reproducibility, but much of the h=12 recovery evidence already exists in the survival audit. The h=24 origin-level breakdown and explicit conditional denominators add clarity rather than a new inferential claim. Neither a return at h nor a loss back within tolerance implies permanent recovery.",
+        "A meaningful fraction of first failures is no longer present at the fixed later horizon. This explicitly reconciles first-passage durability with endpoint reproducibility, but much of the h=12 recovery evidence already exists in the survival audit. The h=24 origin-level breakdown and explicit conditional denominators add clarity rather than a new inferential claim. Neither a return at h nor a loss back within tolerance implies permanent recovery.",
         "",
     ]
     (output / "REPORT.md").write_text("\n".join(lines), encoding="utf-8")
@@ -160,8 +167,8 @@ def change_and_return(root, inputs):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[2])
-    root = parser.parse_args().root
+    parser.add_argument("--root", type=Path, default=None)
+    root = project_root(parser.parse_args().root)
     change_and_return(root, read_frozen(root))
 
 if __name__ == "__main__":

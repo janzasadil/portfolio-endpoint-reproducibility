@@ -1,5 +1,5 @@
 # Generated publication tables
 
-These nine native LaTeX tables are committed for direct manuscript inputs. Do not edit them by hand. Regenerate with `python scripts/reproduce_publication.py`; all nine files are verified byte for byte against this snapshot. The provenance headers identify generators and sources.
+All nine table files are generated native LaTeX. Do not edit them by hand. Regenerate with `python scripts/reproduce_publication.py`; validation checks every table against this committed snapshot.
 
-From a manuscript directory beside this folder, use `\input{../generated/table_A6.tex}` and `\input{../generated/table_A7.tex}`. Reproduced journal packages contain the same files under `tables/` and automatically input A6/A7 after A5. Tables require the journal `\tbl` and `tabnote` conventions plus booktabs, tabularx, array and makecell.
+A manuscript in a neighboring directory can use `\input{../generated/table_1.tex}`, followed by the other main and supplemental table inputs. Reproduced packages use `tables/` for all table inputs. See [reproduction documentation](../docs/REPRODUCIBILITY.md) for the supported packages and optional journal assembly.

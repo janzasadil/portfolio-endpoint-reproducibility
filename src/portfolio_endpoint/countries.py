@@ -11,7 +11,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-from .ingest import MISSING_CODES, sha256
+from .ingest import project_root, MISSING_CODES, sha256
 
 COUNTRY_NAMES = {
     "Austria": "Austria", "Austrlia": "Australia", "Belgium": "Belgium", "Canada": "Canada",
@@ -89,14 +89,20 @@ def parse_broader_country_markets(archive: Path, start: str = "1975-01-31") -> t
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=None)
     parser.add_argument("--archive", type=Path, default=Path("data/raw/F-F_International_Countries.zip"))
     parser.add_argument("--output", type=Path, default=Path("data/processed/ff_international_country_markets_usd_monthly.csv"))
     parser.add_argument("--audit", type=Path, default=Path("results/country_extension/country_data_audit.json"))
     args = parser.parse_args()
+    root = project_root(args.root)
+    for name in ("archive", "output", "audit"):
+        value = getattr(args, name)
+        if not value.is_absolute():
+            setattr(args, name, root / value)
     panel, audit = parse_broader_country_markets(args.archive)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.audit.parent.mkdir(parents=True, exist_ok=True)
-    panel.to_csv(args.output, index_label="date", float_format="%.10f")
+    panel.to_csv(args.output, index_label="date", float_format="%.10f", lineterminator="\r\n")
     args.audit.write_text(json.dumps(audit, indent=2), encoding="utf-8")
     print(json.dumps({"output": str(args.output), **{key: audit[key] for key in ("n_countries", "n_months", "sample_start", "sample_end")}}, indent=2))
 

@@ -1,4 +1,4 @@
-"""Exploratory gap/perturbation and durability diagnostics from saved CEQs only.
+"""Gap/perturbation and durability diagnostics from saved CEQs only.
 
 No portfolio construction, resampling, or new CEQ estimation is performed.
 Exact reported winners use the existing tie rule; numerical tolerances are
@@ -420,7 +420,7 @@ def diagnostic_report(audits, summary, surfaces, provenance) -> str:
     lines = [
         "# Gap-perturbation and durability diagnostic",
         "",
-        "Descriptive exploratory accounting only; no inference or manuscript changes.",
+        "Descriptive accounting only; no inference or manuscript changes.",
         "",
         "## Identity and tie audit",
         "",
@@ -571,14 +571,6 @@ def diagnostic_report(audits, summary, surfaces, provenance) -> str:
         "inspection artifact, not a new estimand or inferential result. A changing-cohort heatmap "
         "is less direct for the paper than its existing 0/25/50-bp survival presentation.",
         "",
-        "## Recommendation",
-        "",
-        "**Decomposition only.** Use the gap/perturbation accounting as a "
-        "compact descriptive diagnostic; keep the full durability surface in the reproducibility "
-        "package. It adds threshold detail but is substantially redundant with existing persistence "
-        "results and uses a different complete-follow-up population from the KM curves. No automatic "
-        "manuscript insertion is recommended.",
-        "",
         "## Reused versus recomputed",
         "",
     ]
@@ -692,7 +684,6 @@ def run(root: Path, output: Path) -> None:
             "Computed running maxima and complete-follow-up surface proportions from those same monthly CEQs; checked existing 0/25/50-bp slices.",
             "No CEQs, portfolio paths, bootstrap replications, manuscript files, or publication outputs were recomputed or modified.",
         ],
-        "recommendation": "decomposition only",
     }
     output.mkdir(parents=True)
     decomposition.to_csv(output / "gap_perturbation_decomposition.csv", index=False)

@@ -1,0 +1,106 @@
+study:
+  frequency: monthly
+  estimation_window_months: 60
+  return_unit: decimal
+  missing_value_policy: reject
+  rebalancing_frequency: monthly
+  transaction_cost_per_half_turnover: 0.0025
+  ceq_risk_aversion: 5
+  evaluation_horizon_months: 120
+  endpoint_displacement_months: 12
+  tie_break_order:
+  - equal_weight
+  - sample_gmv
+  - ledoit_wolf_gmv
+  - inverse_volatility
+  - erc
+  bootstrap_seed: 20260909
+datasets:
+  primary_17_industry:
+    parser: industry_value_weighted
+    label: 17 Fama-French industry portfolios (value weighted)
+    url: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/17_Industry_Portfolios_CSV.zip
+    raw_file: 17_Industry_Portfolios_CSV.zip
+    processed_file: ff_17_industry_value_weighted_monthly.csv
+    sample_start: '1926-07-31'
+    sample_end: '2026-07-31'
+    columns:
+    - Food
+    - Mines
+    - Oil
+    - Clths
+    - Durbl
+    - Chems
+    - Cnsum
+    - Cnstr
+    - Steel
+    - FabPr
+    - Machn
+    - Cars
+    - Trans
+    - Utils
+    - Rtail
+    - Finan
+    - Other
+  replication_30_industry:
+    parser: industry_value_weighted
+    label: 30 Fama-French industry portfolios (value weighted)
+    url: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/30_Industry_Portfolios_CSV.zip
+    raw_file: 30_Industry_Portfolios_CSV.zip
+    processed_file: ff_30_industry_value_weighted_monthly.csv
+    sample_start: '1926-07-31'
+    sample_end: '2026-07-31'
+    columns:
+    - Food
+    - Beer
+    - Smoke
+    - Games
+    - Books
+    - Hshld
+    - Clths
+    - Hlth
+    - Chems
+    - Txtls
+    - Cnstr
+    - Steel
+    - FabPr
+    - ElcEq
+    - Autos
+    - Carry
+    - Mines
+    - Coal
+    - Oil
+    - Util
+    - Telcm
+    - Servs
+    - BusEq
+    - Paper
+    - Trans
+    - Whlsl
+    - Rtail
+    - Meals
+    - Fin
+    - Other
+  replication_international_countries:
+    parser: international_countries
+    label: 'French international country portfolios: broader USD market returns'
+    url: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_International_Countries.zip
+    raw_file: F-F_International_Countries.zip
+    processed_file: ff_international_country_markets_usd_monthly.csv
+    sample_start: '1975-01-31'
+    sample_end: '2025-12-31'
+    columns:
+    - Great Britain
+    - Australia
+    - Belgium
+    - France
+    - Germany
+    - Hong Kong
+    - Italy
+    - Japan
+    - Netherlands
+    - Norway
+    - Singapore
+    - Spain
+    - Sweden
+    - Switzerland

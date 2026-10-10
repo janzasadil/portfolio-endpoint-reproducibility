@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import json
 import hashlib
 import io
 import zipfile
-from datetime import UTC, datetime
 from pathlib import Path
 from urllib.request import urlretrieve
 
@@ -25,8 +25,14 @@ def validate_monthly_calendar(index: pd.DatetimeIndex) -> None:
         raise ValueError("Monthly dates must be unique, increasing, uninterrupted month ends")
 
 
-def project_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+def project_root(root: Path | None = None) -> Path:
+    """Repository-local research tool: explicit root, checkout CWD, or editable source."""
+    candidates = [Path(root)] if root is not None else [Path.cwd(), Path(__file__).resolve().parents[2]]
+    for candidate in candidates:
+        candidate = candidate.resolve()
+        if (candidate / "pyproject.toml").is_file() and (candidate / "config/paper_design.yaml").is_file():
+            return candidate
+    raise ValueError("Run from an editable repository checkout or supply --root CHECKOUT")
 
 
 def sha256(path: Path) -> str:
@@ -73,14 +79,14 @@ def extract_zip_panel(archive: Path) -> pd.DataFrame:
         return parse_value_weighted_monthly(compressed.read(csv_names[0]).decode("utf-8-sig"))
 
 
-def append_manifest(manifest: Path, dataset: str, archive: Path, output: Path, panel: pd.DataFrame) -> None:
-    timestamp = datetime.now(UTC).replace(microsecond=0).isoformat()
-    record = (
-        f"\n| {dataset} | `{archive.name}` → `{output.name}` | {timestamp} | "
-        f"raw: `{sha256(archive)}`; processed: `{sha256(output)}` | {panel.shape[0]} × {panel.shape[1]} |\n"
-    )
-    with manifest.open("a", encoding="utf-8") as handle:
-        handle.write(record)
+def write_data_provenance(manifest: Path, dataset: str, archive: Path, output: Path, panel: pd.DataFrame) -> None:
+    """Idempotent per-dataset artifact; no timestamp or tracked-document mutation."""
+    record = {"dataset": dataset, "raw_file": archive.name, "processed_file": output.name,
+              "raw_sha256": sha256(archive), "processed_sha256": sha256(output),
+              "rows": panel.shape[0], "columns": list(panel.columns),
+              "sample_start": str(panel.index[0].date()), "sample_end": str(panel.index[-1].date())}
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def ingest_dataset(name: str, spec: dict[str, str], root: Path) -> None:
@@ -89,33 +95,55 @@ def ingest_dataset(name: str, spec: dict[str, str], root: Path) -> None:
     processed_dir.mkdir(parents=True, exist_ok=True)
     archive, output = raw_dir / spec["raw_file"], processed_dir / spec["processed_file"]
     if not archive.exists():
-        urlretrieve(spec["url"], archive)
-    if spec["raw_file"] == "F-F_International_Countries.zip":
+        temporary = archive.with_suffix(archive.suffix + ".download")
+        urlretrieve(spec["url"], temporary)
+        if not zipfile.is_zipfile(temporary):
+            raise ValueError("Downloaded data are not a ZIP archive: " + spec["url"])
+        temporary.replace(archive)
+    parser_kind = spec.get("parser", "industry_value_weighted")
+    if parser_kind == "international_countries":
         from .countries import parse_broader_country_markets
         import json
         panel, audit = parse_broader_country_markets(archive)
         audit_dir = root / "results/country_extension"
         audit_dir.mkdir(parents=True, exist_ok=True)
         (audit_dir / "country_data_audit.json").write_text(json.dumps(audit, indent=2), encoding="utf-8")
-    else:
+    elif parser_kind == "industry_value_weighted":
         panel = extract_zip_panel(archive)
-    panel.to_csv(output, index=True, float_format="%.10f")
-    append_manifest(root / "DATA_MANIFEST.md", name, archive, output, panel)
+    else:
+        raise ValueError("Unknown dataset parser: " + parser_kind)
+    if "sample_start" in spec or "sample_end" in spec:
+        panel = panel.loc[spec.get("sample_start"):spec.get("sample_end")]
+        expected = pd.date_range(spec["sample_start"], spec["sample_end"], freq="ME", name="date")
+        if not panel.index.equals(expected):
+            raise ValueError("Raw data do not cover the configured paper sample: " + name)
+    if "columns" in spec:
+        missing = set(spec["columns"]) - set(panel.columns)
+        if missing:
+            raise ValueError(f"Raw data missing configured assets: {sorted(missing)}")
+        panel = panel.loc[:, spec["columns"]]
+    panel.index.name = "date"
+    # Match the paper's recorded panel bytes on every operating system.
+    panel.to_csv(output, index=True, float_format="%.10f", lineterminator="\r\n")
+    write_data_provenance(root / "data/provenance" / (name + ".json"), name, archive, output, panel)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", type=Path, default=project_root() / "config" / "experiment.yaml")
+    parser.add_argument("--root", type=Path, default=None)
+    parser.add_argument("--config", type=Path, default=None)
     parser.add_argument("--dataset", action="append", help="Dataset key; may be repeated (default: all)")
     args = parser.parse_args()
-    with args.config.open(encoding="utf-8") as handle:
+    root = project_root(args.root)
+    config_path = args.config or root / "config/paper_design.yaml"
+    with config_path.open(encoding="utf-8") as handle:
         datasets = yaml.safe_load(handle)["datasets"]
     selected = args.dataset or list(datasets)
     unknown = set(selected) - set(datasets)
     if unknown:
         parser.error(f"Unknown dataset(s): {', '.join(sorted(unknown))}")
     for name in selected:
-        ingest_dataset(name, datasets[name], project_root())
+        ingest_dataset(name, datasets[name], root)
 
 
 if __name__ == "__main__":

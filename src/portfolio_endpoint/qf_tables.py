@@ -1,4 +1,4 @@
-"""QF V4 appendix table bodies from frozen saved outputs only."""
+"""Publication appendix table bodies from frozen saved outputs only."""
 
 from __future__ import annotations
 
@@ -261,7 +261,7 @@ def appendix_tables(root: Path) -> tuple[dict[str, list[str]], dict]:
                 ]
             )
         a4.append(format_table_rows(method_rows))
-    a5a = []
+    bootstrap_endpoint_rows = []
     for label, scheme, folder, point, key in [
         (
             "17 industries",
@@ -293,7 +293,7 @@ def appendix_tables(root: Path) -> tuple[dict[str, list[str]], dict]:
         ),
     ]:
         draws = pd.read_csv(results / folder / "outer_bootstrap.csv", usecols=[key])
-        a5a.append(
+        bootstrap_endpoint_rows.append(
             [
                 label,
                 scheme,
@@ -303,7 +303,7 @@ def appendix_tables(root: Path) -> tuple[dict[str, list[str]], dict]:
                 ),
             ]
         )
-    a5b = []
+    bootstrap_selection_rows = []
     for h, key in [
         (6, "h6_mean_endpoint_loss"),
         (12, "baseline_mean_endpoint_loss"),
@@ -318,34 +318,34 @@ def appendix_tables(root: Path) -> tuple[dict[str, list[str]], dict]:
             ]
             .iloc[0]
         )
-        a5b.append(
+        bootstrap_selection_rows.append(
             [
                 h,
                 format_interval_cell(point, saved_interval("primary_17_definitive_B2000", key)),
             ]
         )
-    a5c = []
+    bootstrap_comparison_rows = []
     for label, key, scale, signed in [
         ("Mean endpoint loss (bp)", "mean_endpoint_loss", 10000, False),
-        ("Literal winner change", "literal_switch_frequency", 100, False),
-        (r"Kaplan--Meier literal $S(12)$", "survival_12_months", 100, False),
-        (r"Kaplan--Meier literal $S(24)$", "survival_24_months", 100, False),
+        ("Winner change", "literal_switch_frequency", 100, False),
+        (r"Winner-change $\widehat S_{\mathrm{KM}}(12)$", "survival_12_months", 100, False),
+        (r"Winner-change $\widehat S_{\mathrm{KM}}(24)$", "survival_24_months", 100, False),
         ("Correct selection rate", "selector_hit_rate", 100, False),
         ("Selection regret (bp)", "mean_selection_regret", 10000, False),
         (
-            r"Selector $-$ ensemble CEQ (bp)",
+            r"Mean selector $-$ ensemble CEQ (bp)",
             "mean_selector_minus_ensemble",
             10000,
             True,
         ),
     ]:
-        a5c.append(
+        bootstrap_comparison_rows.append(
             [
                 label,
                 format_interval_cell(country_summary[key], country_intervals[key], scale, signed),
             ]
         )
-    a6a = format_table_rows(
+    specification_rows = format_table_rows(
         [
             ["Equal weight", "None", r"$w_i=1/N$"],
             ["Sample GMV", "Sample covariance", "Long-only minimum variance"],
@@ -358,7 +358,7 @@ def appendix_tables(root: Path) -> tuple[dict[str, list[str]], dict]:
             ["ERC", "Sample covariance", "Equal risk contributions"],
         ]
     )
-    a6b = []
+    sample_rows = []
     for label, filename, pairs, selections in [
         (
             "17 industries",
@@ -380,7 +380,7 @@ def appendix_tables(root: Path) -> tuple[dict[str, list[str]], dict]:
         ),
     ]:
         panel = pd.read_csv(root / "data/processed" / filename, index_col="date", parse_dates=True)
-        a6b.append(
+        sample_rows.append(
             [
                 label + f" ($N={panel.shape[1]}$)",
                 panel.index[0].strftime("%Y-%m") + "--" + panel.index[-1].strftime("%Y-%m"),
@@ -394,11 +394,11 @@ def appendix_tables(root: Path) -> tuple[dict[str, list[str]], dict]:
         "table_A2": [a2a, a2b],
         "table_A3": a4,
         "table_A4": [
-            format_table_rows(a5a),
-            format_table_rows(a5b),
-            format_table_rows(a5c),
+            format_table_rows(bootstrap_endpoint_rows),
+            format_table_rows(bootstrap_selection_rows),
+            format_table_rows(bootstrap_comparison_rows),
         ],
-        "table_A5": [a6a, format_table_rows(a6b)],
+        "table_A5": [specification_rows, format_table_rows(sample_rows)],
     }, {
         "canonical_runs": sources,
         "specification_pair_counts": eligible,

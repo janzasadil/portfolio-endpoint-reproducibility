@@ -1,12 +1,11 @@
 """Read frozen monthly CEQs and endpoint pairs; no portfolio reconstruction."""
 from __future__ import annotations
 
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from .analysis import TIE_BREAK_ORDER, _winner, ceq
+from .analysis import TIE_BREAK_ORDER
 
 SAMPLES = {
     "17_industries": ("17 U.S. industries", "primary17", "primary_17_definitive_B2000"),

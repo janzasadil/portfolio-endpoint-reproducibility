@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from .ingest import project_root
 
 import numpy as np
-import pandas as pd
 
-from .analysis import TIE_BREAK_ORDER, _winner, ceq
 
 from .supplement_inputs import SAMPLES, read_frozen
 from .ceq_component_decomposition import reversal_points
@@ -29,13 +28,13 @@ def write_gap_caption(output):
     )
 
 
-def gap_figure(root, points, *, write_points=True):
+def gap_figure(root, points, *, write_points=True, output=None, pdf=None):
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    output = root / "results/gap_perturbation_scatter"
+    output = Path(output) if output is not None else root / "results/gap_perturbation_scatter"
     output.mkdir(parents=True, exist_ok=True)
     if write_points:
         points.to_csv(output / "points.csv", index=False)
@@ -91,7 +90,7 @@ def gap_figure(root, points, *, write_points=True):
         columnspacing=2.5,
         handlelength=3,
     )
-    pdf = root / "output/pdf/gap_perturbation_scatter.pdf"
+    pdf = Path(pdf) if pdf is not None else output / "gap_perturbation_scatter.pdf"
     pdf.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(pdf)
     fig.savefig(output / "gap_perturbation_scatter.png", dpi=250)
@@ -119,9 +118,8 @@ def gap_figure(root, points, *, write_points=True):
         "",
         "All y-x losses match stored losses to 1e-12 native units; every changed-winner point is above y=x (no exact tied winner changes). Classification above y=x+25 matches strict stored loss >25 bp exactly. Both panels share identical axis limits. The shared legend sits below the panels; the zero-loss reference is dark solid and the 25-bp reference is lighter with long dashes. Point labels are omitted to avoid unexplained bookkeeping codes; points.csv retains IDs (US = industry sample, INT = country sample; numbers enumerate winner-change observations in chronological order).",
         "",
-        "**Useful only in supplement; retain only as reviewer-response material for now.** The plot makes the threshold geometry tangible but the loss-gap identity is algebraic and the materiality counts are already reported. The country panel has only six winner changes, so its scatter is not evidence of a general relationship. It may help explain the equation to readers, but is not a separate empirical contribution or an inferential diagram; do not automatically add another figure.",
         "",
-        "Figure: output/pdf/gap_perturbation_scatter.pdf; editable vector copy and preview in this directory. Manuscript and publication sources are unchanged.",
+        "Figure PDF: " + str(pdf.relative_to(root) if pdf.is_relative_to(root) else pdf.name) + "; editable vector copy and preview are in this analysis directory. Source inputs are unchanged.",
         "",
     ]
     (output / "REPORT.md").write_text("\n".join(lines), encoding="utf-8")
@@ -131,8 +129,8 @@ def gap_figure(root, points, *, write_points=True):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[2])
-    root = parser.parse_args().root
+    parser.add_argument("--root", type=Path, default=None)
+    root = project_root(parser.parse_args().root)
     gap_figure(root, reversal_points(read_frozen(root)))
 
 if __name__ == "__main__":

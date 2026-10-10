@@ -1,6 +1,6 @@
-"""Generate the QF V4 tables and audit them against frozen outputs.
+"""Generate publication tables and audit them against saved outputs.
 
-The supplied ZIP provides layouts, manuscript prose, and figure assets only.
+Committed table layouts support scientific reproduction. An optional pinned ZIP supplies journal manuscript prose and assets.
 All table data bodies are generated independently from saved results. No
 portfolio paths, endpoint analyses, CEQs, or bootstrap draws are rerun.
 """
@@ -84,7 +84,7 @@ def conditional_gap_statistics(pairs: pd.DataFrame) -> dict:
     }
 
 
-def build_qf_tables(root: Path) -> tuple[dict[str, list[str]], dict]:
+def build_qf_tables(root: Path, *, check_reference=True) -> tuple[dict[str, list[str]], dict]:
     previous, provenance = appendix_tables(root)
     pairs, selections, benchmarks, summaries = {}, {}, {}, {}
     for sample, expected in SAMPLES.items():
@@ -95,7 +95,7 @@ def build_qf_tables(root: Path) -> tuple[dict[str, list[str]], dict]:
         )
         summaries[sample] = json.loads((folder / "summary.json").read_text())
         _, _, benchmark, _, _ = benchmark_selection(selections[sample], sample)
-        validate_headlines(benchmark, summaries[sample], expected)
+        validate_headlines(benchmark, summaries[sample], expected, check_reference=check_reference)
         benchmarks[sample] = benchmark
     order = ("17_industries", "14_countries")
     interval_folders = {
@@ -273,13 +273,6 @@ def build_qf_tables(root: Path) -> tuple[dict[str, list[str]], dict]:
                 ]
             )
     a4 = list(previous["table_A4"])
-    a4[2] = a4[2].replace("Literal winner change", "Winner change")
-    for horizon in (12, 24):
-        a4[2] = a4[2].replace(
-            r"Kaplan--Meier literal $S(" + str(horizon) + ")$",
-            r"Winner-change $\widehat S_{\mathrm{KM}}(" + str(horizon) + ")$",
-        )
-    a4[2] = a4[2].replace(r"Selector $-$ ensemble CEQ", r"Mean selector $-$ ensemble CEQ")
     bodies = {
         "table_1": [t1],
         "table_2": [t2],
@@ -293,7 +286,7 @@ def build_qf_tables(root: Path) -> tuple[dict[str, list[str]], dict]:
         {
             "prospective_benchmarks": benchmarks,
             "conditional_gap_statistics": conditional,
-            "export_scope": "QF V4 seven-table export; saved outputs only; no empirical computation",
+            "export_scope": "Publication table export; saved outputs only; no empirical computation",
             "additional_inputs": [
                 "results/calendar_window_robustness/calendar_phase_sensitivity.csv",
                 "results/calendar_window_robustness/evaluation_window_sensitivity.csv",
@@ -350,13 +343,13 @@ def template_prefix(archive: zipfile.ZipFile) -> str:
     return prefix
 
 
-def implementation_audit(root: Path, provenance: dict) -> dict:
+def implementation_audit(root: Path, provenance: dict, *, check_reference=True) -> dict:
     import yaml
     from .diagnostics import audit_summary
     from .gap_perturbation import monthly_panel_from_pairs, read_pairs
     from .methods import SETTINGS
 
-    settings = yaml.safe_load((root / "config/experiment.yaml").read_text())["study"]
+    settings = yaml.safe_load((root / "config/paper_design.yaml").read_text())["study"]
     required = {
         "estimation_window_months": 60,
         "evaluation_horizon_months": 120,
@@ -367,7 +360,7 @@ def implementation_audit(root: Path, provenance: dict) -> dict:
         "tie_break_order": list(TIE_BREAK_ORDER),
     }
     if any(settings[key] != value for key, value in required.items()):
-        raise ValueError("Current study settings do not match the V4 paper specification")
+        raise ValueError("Current study settings do not match the paper specification")
     if (
         SETTINGS.max_iterations,
         SETTINGS.objective_tolerance,
@@ -405,6 +398,10 @@ def implementation_audit(root: Path, provenance: dict) -> dict:
         ("primary_17_fixedblock12_B1000", 1000, 12),
         ("primary_17_fixedblock24_B1000", 1000, 24),
     ):
+        if not check_reference:
+            manifest = json.loads((root / "results" / folder / "run_manifest.json").read_text())
+            expected_b = manifest["outer_bootstrap_replications"]
+            expected_block = manifest["run_identity"]["block_length"]
         draws = pd.read_csv(
             root / "results" / folder / "outer_bootstrap.csv",
             usecols=["replication", "block_length"],
@@ -437,14 +434,14 @@ def implementation_audit(root: Path, provenance: dict) -> dict:
         }
         if tied.any():
             raise ValueError(
-                "V4 zero-threshold/first-winner-change equivalence needs revision: monthly top ties exist"
+                "Zero-threshold/first-winner-change equivalence needs revision: monthly top ties exist"
             )
     for sample, filename in (
         ("17_industries", "primary17_leave_one_out.csv"),
         ("14_countries", "countries_leave_one_out.csv"),
     ):
         omitted = pd.read_csv(root / "results/extension" / filename)
-        if not (omitted.mean_endpoint_loss > 0).all():
+        if check_reference and not (omitted.mean_endpoint_loss > 0).all():
             raise ValueError("Leave-one-out positivity claim does not reproduce")
     return {
         "baseline_settings": required,
@@ -459,22 +456,25 @@ def implementation_audit(root: Path, provenance: dict) -> dict:
             "covariance and solver conventions": "methods.py: sample_covariance, ledoit_wolf_gmv, erc, SETTINGS",
             "resampling, bounded block rule, replicate averaging": "bootstrap.py: protocol_block_length, outer_bootstrap, _draw_metrics, outer_sensitivity_bootstrap",
         },
-        "clarifications": [
-            "The decomposition medians in Results 3.1 are conditional on a winner change, as Table 1 Panel B states. Make that conditioning explicit in the prose; unconditional medians include structural zeros.",
-            "Table A1 Panel A uses specification-specific eligible samples and full-sample KM medians, not the earlier 80-common-origin analysis. Adding those sample definitions/counts to its note would improve transparency.",
-            "The corrected Politis-White implementation additionally bounds block lengths to [2, floor(sqrt(T))] and rounds upward; Appendix E gives the realized lengths but does not state this implementation detail.",
-            "The international Mkt series is the broader value-weighted USD series with all four valuation ratios not required; its market coverage depends on B/M availability. Do not describe it as every listed stock in a national index.",
-        ],
-        "figures": "V4 PDF figure assets are preserved, not regenerated. Visual labels/captions were reviewed against saved diagnostics; individual plotted vertices are not automatically audited.",
+        "figures": "Figure assets are preserved, not regenerated. Visual labels/captions were reviewed against saved diagnostics; individual plotted vertices are not automatically audited.",
     }
 
 
-def write_audit_report(output: Path, numerical: pd.DataFrame, audit: dict) -> None:
+def write_audit_report(output: Path, numerical: pd.DataFrame, audit: dict, *, check_reference=True) -> None:
     failures = numerical.loc[~numerical.matches]
+    if not check_reference:
+        lines = ["# Publication results from regenerated analysis", "",
+                 "Tables and figures use analysis outputs regenerated from raw data in this working tree.",
+                 f"Comparison with the submitted seven core tables: {len(failures)} differing numerical tokens out of {len(numerical)} compared.",
+                 "Differences are reported in table_numeric_audit.csv; they are not overwritten with submitted values.",
+                 "Scientific consistency checks cover the resolved design, solver settings, bootstrap draw registry, CEQ identities and first-passage components.",
+                 "See the parent RAW_REPRODUCTION_REPORT.json for data vintage, complete-run or smoke-test scope, and final nine-table comparison."]
+        (output / "PAPER_CODE_AUDIT.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return
     lines = [
-        "# QF V4 paper-code consistency audit",
+        "# Publication numerical validation",
         "",
-        f"Generated all seven tables from frozen outputs. Compared {len(numerical)} printed numerical tokens (including numerical row labels) across 15 table bodies: {len(failures)} discrepancies.",
+        f"Generated the seven core numerical tables from saved outputs; A6/A7 are validated against individual records in the same canonical build. Compared {len(numerical)} printed numerical tokens (including numerical row labels) across 15 table bodies: {len(failures)} discrepancies.",
         "",
         "## Verified",
         "",
@@ -503,8 +503,6 @@ def write_audit_report(output: Path, numerical: pd.DataFrame, audit: dict) -> No
             + str(int(row["median_months"]))
             + " |"
         )
-    lines += ["", "## Wording/implementation clarifications (not changed automatically)", ""]
-    lines += ["- " + text for text in audit["clarifications"]]
     lines += [
         "",
         "## Scope and preservation",
@@ -515,11 +513,11 @@ def write_audit_report(output: Path, numerical: pd.DataFrame, audit: dict) -> No
             else "Printed-value differences are detailed in table_numeric_audit.csv; generated tables use saved results, never submitted numeric literals."
         ),
         (
-            "The manuscript prose, journal class and bibliography are preserved. All four QF figures are regenerated from frozen saved diagnostics, with full-precision plotting ledgers; no new empirical results."
+            "The four core figures are regenerated from saved diagnostics with full-precision plotting ledgers; journal assets, if requested, are handled separately."
             if audit.get("figures_regenerated")
-            else "The manuscript prose, journal class, bibliography, and four figure assets are copied from the V4 ZIP without scientific edits. Figures remain supplied assets; do not assume this exporter regenerates them if data change."
+            else "The manuscript prose, journal class, bibliography, and four figure assets are copied from the pinned journal source without scientific edits. Figures remain supplied assets; do not assume this exporter regenerates them if data change."
         ),
-        "Original Downloads files, earlier publication outputs, and frozen empirical run directories are unchanged. No portfolio construction, endpoint/robustness analysis, or bootstrap ran. Only lightweight saved-output aggregation and percentile quantiles were evaluated.",
+        "Source inputs, earlier publication outputs, and frozen empirical run directories are unchanged. No portfolio construction, endpoint/robustness analysis, or bootstrap ran. Only lightweight saved-output aggregation and percentile quantiles were evaluated.",
         "This is a paper-code audit, not an independent check of external literature, journal policies, author declarations, or every pixel of the supplied figures.",
         "",
         "Machine-readable evidence: table_numeric_audit.csv, PAPER_CODE_AUDIT.json, EXPORT_MANIFEST.json, and sources/publication_table_bodies.json.",
@@ -528,33 +526,44 @@ def write_audit_report(output: Path, numerical: pd.DataFrame, audit: dict) -> No
 
 
 def assemble(
-    root: Path, template_zip: Path, output: Path, *, regenerate_figures: bool = False
+    root: Path, template_zip: Path | None, output: Path, *, regenerate_figures: bool = False,
+    check_reference: bool = True
 ) -> None:
     if output.exists():
         raise FileExistsError(
-            "Choose a fresh V4 output directory; existing publication packages are preserved"
+            "Choose a fresh output directory; existing publication packages are preserved"
         )
-    bodies, provenance = build_qf_tables(root)
-    implementation = implementation_audit(root, provenance)
+    bodies, provenance = build_qf_tables(root, check_reference=check_reference)
+    implementation = implementation_audit(root, provenance, check_reference=check_reference)
     rendered, comparisons = {}, []
-    with zipfile.ZipFile(template_zip) as archive:
-        prefix = template_prefix(archive)
+    if template_zip is None:
         for name in TABLE_NAMES:
-            template = archive.read(prefix + "tables/" + name + ".tex").decode("utf-8-sig")
+            template = (root / "generated" / (name + ".tex")).read_text(encoding="utf-8")
+            template = "\n".join(line for line in template.splitlines() if not line.startswith("%")) + "\n"
             rendered[name] = replace_table_bodies(template, bodies[name])
             comparisons.extend(compare_table_numbers(name, template, bodies[name]))
-        assets = [
-            "main.tex",
-            "supplemental_material.tex",
-            "references.bib",
-            "rQUF2e.cls",
-            "rQUF.bst",
-            "main.bbl",
-            "README_QF_OFFICIAL_FORMAT.txt",
-        ]
-        if not regenerate_figures:
-            assets += ["figures/" + name + ".pdf" for name in FIGURE_NAMES]
-        payloads = {name: archive.read(prefix + name) for name in assets}
+        payloads = {}
+    else:
+        from .provenance import verify_template
+        verify_template(root, template_zip)
+        with zipfile.ZipFile(template_zip) as archive:
+            prefix = template_prefix(archive)
+            for name in TABLE_NAMES:
+                template = archive.read(prefix + "tables/" + name + ".tex").decode("utf-8-sig")
+                rendered[name] = replace_table_bodies(template, bodies[name])
+                comparisons.extend(compare_table_numbers(name, template, bodies[name]))
+            assets = [
+                "main.tex",
+                "supplemental_material.tex",
+                "references.bib",
+                "rQUF2e.cls",
+                "rQUF.bst",
+                "main.bbl",
+                "README_QF_OFFICIAL_FORMAT.txt",
+            ]
+            if not regenerate_figures:
+                assets += ["figures/" + name + ".pdf" for name in FIGURE_NAMES]
+            payloads = {name: archive.read(prefix + name) for name in assets}
     output.mkdir(parents=True)
     for name, contents in payloads.items():
         target = output / name
@@ -566,13 +575,21 @@ def assemble(
         render_figures(root, output / "figures")
     (output / "tables").mkdir()
     for name, contents in rendered.items():
+        origin = "frozen outputs" if check_reference else "regenerated analysis outputs"
+        manifest = "replication/publication_inputs.json" if check_reference else "sources/regenerated_inputs.json"
         header = (
             "% AUTO-GENERATED FILE. DO NOT EDIT BY HAND.\n"
-            "% Generated by portfolio_endpoint.qf_publication from frozen outputs.\n"
-            "% Sources: replication/qf_input_manifest.json; see sources/publication_table_bodies.json in reproduced packages.\n"
+            f"% Generated by portfolio_endpoint.qf_publication from {origin}.\n"
+            f"% Sources: {manifest}; see sources/publication_table_bodies.json in reproduced packages.\n"
         )
         (output / "tables" / (name + ".tex")).write_text(header + contents.replace("\r\n", "\n"), encoding="utf-8", newline="\n")
-    (output / "sources").mkdir()
+    (output / "sources").mkdir(exist_ok=True)
+    if not check_reference:
+        from .provenance import manifest_target
+        inventory = json.loads((root / "replication/publication_inputs.json").read_text())
+        regenerated = {"scope": "Inputs regenerated from raw archives for this publication export",
+                       "files": {name: sha256(manifest_target(root, name)) for name in inventory["files"]}}
+        (output / "sources/regenerated_inputs.json").write_text(json.dumps(regenerated, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     (output / "sources/publication_table_bodies.json").write_text(
         json.dumps(bodies, indent=2), encoding="utf-8"
     )
@@ -580,7 +597,7 @@ def assemble(
     implementation["figures_regenerated"] = regenerate_figures
     if regenerate_figures:
         implementation["figures"] = (
-            "Four QF figures regenerated from frozen saved diagnostics; full-precision CSV ledgers saved alongside PDFs. No new empirical analysis."
+            "Four core figures regenerated from frozen saved diagnostics; full-precision CSV ledgers saved alongside PDFs. No new empirical analysis."
         )
     numerical.to_csv(output / "table_numeric_audit.csv", index=False)
     implementation["printed_numeric_discrepancies"] = int((~numerical.matches).sum())
@@ -589,42 +606,85 @@ def assemble(
     )
     provenance.update(
         {
-            "template_sha256": sha256(template_zip),
+            "template_sha256": sha256(template_zip) if template_zip is not None else None,
             "table_names": list(TABLE_NAMES),
             "table_body_counts": {name: len(value) for name, value in bodies.items()},
             "numeric_tokens_compared": len(numerical),
             "printed_numeric_discrepancies": int((~numerical.matches).sum()),
             "figure_policy": (
-                "Regenerate four QF figures from frozen saved diagnostics"
+                "Regenerate four core figures from frozen saved diagnostics"
                 if regenerate_figures
                 else "Copy supplied V4 figures, do not generate new empirical figures"
             ),
         }
     )
     (output / "EXPORT_MANIFEST.json").write_text(json.dumps(provenance, indent=2), encoding="utf-8")
-    write_audit_report(output, numerical, implementation)
+    write_audit_report(output, numerical, implementation, check_reference=check_reference)
+    from .supplement_inputs import read_frozen
+    from .change_return import change_and_return
+    from .ceq_component_decomposition import reversal_points, return_risk
+    from .supplement_tables import build
+
+    inputs = read_frozen(root)
+    analysis_output = output / "sources"
+    change_and_return(root, inputs, output=analysis_output / "change_and_return")
+    return_risk(root, inputs, reversal_points(inputs), output=analysis_output / "return_risk_decomposition")
+    build(root, output, input_root=analysis_output)
+    provenance["table_names"] = [*TABLE_NAMES, "table_A6", "table_A7"]
+    provenance["table_sha256"] = {
+        name: sha256(output / "tables" / (name + ".tex")) for name in provenance["table_names"]
+    }
+    (output / "EXPORT_MANIFEST.json").write_text(json.dumps(provenance, indent=2), encoding="utf-8")
+    if template_zip is None:
+        write_table_preview(output)
+    else:
+        # The pinned source provides manuscript prose. Canonical extra inputs are generated
+        # once at the document boundary, without assumptions about A5's source spelling.
+        supplement = output / "supplemental_material.tex"
+        text = supplement.read_text(encoding="utf-8")
+        missing = [name for name in ("table_A6", "table_A7") if r"\input{tables/" + name + ".tex}" not in text]
+        if missing:
+            before, boundary, after = text.rpartition(r"\end{document}")
+            if not boundary:
+                raise ValueError("Journal supplement has no document boundary")
+            text = before + "\n".join(r"\input{tables/" + name + ".tex}" for name in missing) + "\n" + boundary + after
+            supplement.write_text(text, encoding="utf-8")
     (output / "README.md").write_text(
-        "# Generated QF V4 publication source\n\nTwo main tables and exactly five appendix tables. "
-        "Every numerical table body is generated from frozen outputs; original prose, layouts, "
-        "journal class and bibliography are preserved. Figure provenance is recorded in EXPORT_MANIFEST.json.\n\n"
-        "Compile main.tex and supplemental_material.tex with pdfLaTeX. The supplied main.bbl "
-        "can be reused, or rebuild with bibtex main. Run pdfLaTeX twice for references.\n\n"
-        "Regenerate from the repository with:\n\n"
-        "```text\npython -m portfolio_endpoint.qf_publication --source-zip PATH_TO_V4_ZIP --output-dir FRESH_OUTPUT_DIR\n```\n\n"
-        "Set PYTHONPATH=src or install the project first. Existing output directories are never overwritten. "
-        "See PAPER_CODE_AUDIT.md for consistency checks and remaining prose clarifications.\n",
-        encoding="utf-8",
+        "# Publication reproduction\n\nTables 1, 2 and A1-A7 are generated native LaTeX. "
+        "Four core figures and their plotting ledgers are regenerated from saved results. "
+        "Analysis CSVs, validation and provenance are in this output tree. "
+        "No raw-data download, portfolio reconstruction or bootstrap ran.\n\n"
+        "Regenerate with python scripts/reproduce_publication.py --output-dir FRESH_DIRECTORY. "
+        "The generic table preview needs no journal template. Journal manuscript assembly "
+        "is a separate optional command.\n", encoding="utf-8"
     )
-    print("Generated QF V4 source: " + str(output))
-    print(
-        "Printed numerical discrepancies: " + str(implementation["printed_numeric_discrepancies"])
-    )
+    print("Generated publication outputs: " + str(output))
+    print("Printed numerical discrepancies: " + str(implementation["printed_numeric_discrepancies"]))
+
+
+def write_table_preview(output):
+    preamble = r"""\documentclass[10pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[textwidth=160mm,textheight=240mm]{geometry}
+\usepackage{amsmath,amssymb,booktabs,tabularx,array,makecell,placeins}
+\newdimen\tabledim
+\tabledim=0pt
+\newcommand{\tbl}[2]{\caption{#1}\vspace{0.25em}#2}
+\newenvironment{tabnote}{\par\vspace{0.5em}\footnotesize}{\par}
+\begin{document}
+"""
+    inputs = []
+    for name in (*TABLE_NAMES, "table_A6", "table_A7"):
+        if name == "table_A1":
+            inputs.append(r"\renewcommand{\thetable}{A\arabic{table}}\setcounter{table}{0}")
+        inputs.append(r"\input{tables/" + name + ".tex}\n\\FloatBarrier\n")
+    (output / "tables_preview.tex").write_text(preamble + "\n".join(inputs) + r"\end{document}" + "\n", encoding="utf-8")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--source-zip", type=Path, default=project_root() / "replication/qf_source_template.zip"
+        "--source-zip", type=Path, default=None
     )
     parser.add_argument("--regenerate-figures", action="store_true")
     parser.add_argument("--output-dir", type=Path)
@@ -633,7 +693,7 @@ def main() -> None:
     assemble(
         root,
         args.source_zip,
-        args.output_dir or root / "results/publication_qf",
+        args.output_dir or root / "results/reproduced_publication",
         regenerate_figures=args.regenerate_figures,
     )
 

@@ -26,3 +26,9 @@ replication/frozen_source.zip
 
 # Journal template is an external companion asset.
 replication/qf_source_template.zip
+
+# Per-ingestion provenance and local packaging files.
+data/provenance/
+*.egg-info/
+build/
+dist/

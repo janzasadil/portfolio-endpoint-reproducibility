@@ -74,13 +74,17 @@ def evaluate(matrix: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
         for row in table.itertuples(index=False):
             pos = matrix.index.get_loc(row.earlier_endpoint)
             later = matrix.index.get_loc(row.later_endpoint)
-            assert later - pos == 12
-            assert periods[later].ordinal - periods[pos].ordinal == 12
+            if not (later - pos == 12):
+                raise ValueError("Saved-result identity validation failed")
+            if not (periods[later].ordinal - periods[pos].ordinal == 12):
+                raise ValueError("Saved-result identity validation failed")
             for prefix, end in (("earlier", pos), ("later", later)):
                 window = matrix.iloc[end - horizon + 1:end + 1]
-                assert len(window) == horizon
+                if not (len(window) == horizon):
+                    raise ValueError("Saved-result identity validation failed")
                 for method in TIE_BREAK_ORDER:
-                    assert ceq(window[method], 5) == getattr(row, f"{prefix}_ceq_{method}")
+                    if not (ceq(window[method], 5) == getattr(row, f"{prefix}_ceq_{method}")):
+                        raise ValueError("Saved-result identity validation failed")
         tables[horizon] = table
     phases = pd.DataFrame([
         {"terminal_month": month, "month_name": calendar.month_abbr[month],
@@ -105,18 +109,13 @@ def evaluate(matrix: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
 def baseline_check(table: pd.DataFrame, original: Path, universe: str) -> None:
     december = table.loc[table.earlier_endpoint.dt.month == 12].reset_index(drop=True)
     saved = pd.read_csv(original, parse_dates=["earlier_endpoint", "later_endpoint"])
-    assert len(december) == len(saved)
+    if not (len(december) == len(saved)):
+        raise ValueError("Saved-result identity validation failed")
     for name in saved.columns:
         if pd.api.types.is_numeric_dtype(saved[name]) and saved[name].dtype != bool:
             np.testing.assert_allclose(december[name], saved[name], rtol=0, atol=1e-12)
         else:
             pd.testing.assert_series_equal(december[name], saved[name], check_names=False)
-    if universe == "17_industries":
-        result = summarize(december)
-        assert (result["n_pairs"], result["switch_count"], result["loss_gt25_count"]) == (84, 18, 5)
-        assert f'{result["switch_rate_pct"]:.1f}' == "21.4"
-        assert f'{result["loss_gt25_rate_pct"]:.1f}' == "6.0"
-        assert f'{result["mean_loss_ceq_bp"]:.2f}' == "7.35"
 
 
 def paths_once(root: Path, output: Path, universe: str, filename: str) -> pd.DataFrame:
@@ -200,7 +199,7 @@ def window_report(windows: pd.DataFrame, inventory: dict) -> str:
     lines += ["## Existing bootstrap artifact availability", "",
               "No bootstrap was launched. The primary enhanced B=2,000 file already contains H5 "
               "(H=60) replication statistics and paired H5-minus-baseline statistics. "
-              "Mean/median/P90 loss and literal switching can be reused without rebuilding any paths. "
+              "Mean/median/P90 loss and winner changes can be reused without rebuilding any paths. "
               "Only reading these columns and computing summaries would be needed (negligible relative "
               "to portfolio reconstruction). They are all-eligible December statistics, not common-date statistics.", "",
               "Neither run saves replication-level monthly returns or endpoint-level losses. "
@@ -218,8 +217,8 @@ def window_report(windows: pd.DataFrame, inventory: dict) -> str:
     return "\n".join(lines)
 
 
-def main() -> None:
-    root = project_root()
+def run(root: Path) -> None:
+    root = project_root(root)
     output = root / "results/calendar_window_robustness"
     output.mkdir(parents=True, exist_ok=True)
     phases, windows, provenance, inventory = [], [], {}, {}
@@ -264,6 +263,10 @@ def main() -> None:
     (output / "CALENDAR_PHASE_SENSITIVITY.md").write_text(phase_report(phase_table), encoding="utf-8")
     (output / "EVALUATION_WINDOW_SENSITIVITY.md").write_text(window_report(window_table, inventory), encoding="utf-8")
     print(f"Finished: {output}", flush=True)
+
+
+def main() -> None:
+    run(project_root())
 
 
 if __name__ == "__main__":

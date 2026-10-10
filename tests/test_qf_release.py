@@ -6,11 +6,9 @@ import tomllib
 
 from portfolio_endpoint import qf_tables
 from portfolio_endpoint.qf_release import (
-    EXCLUDED_MODULES,
     MODULES,
     assert_dependency_closure,
     manifest_target,
-    release_project_text,
     verify_manifest,
 )
 
@@ -27,7 +25,7 @@ def test_qf_pipeline_and_tests_have_no_legacy_package_imports():
         {p.relative_to(root).as_posix(): p.read_bytes() for p in (root / "tests").glob("test_*.py")}
     )
     assert_dependency_closure(payloads)
-    assert not set(MODULES) & set(EXCLUDED_MODULES)
+    assert not {"near_tie", "frl_publication", "reporting"} & set(MODULES)
 
 
 def test_qf_table_builder_does_not_require_old_near_tie_input():
@@ -40,7 +38,7 @@ def test_qf_table_builder_does_not_require_old_near_tie_input():
 
 def test_release_metadata_omits_legacy_entry_points():
     root = Path(__file__).resolve().parents[1]
-    project = tomllib.loads(release_project_text((root / "pyproject.toml").read_text()))
+    project = tomllib.loads((root / "pyproject.toml").read_text())
     commands = project["project"]["scripts"]
     assert "portfolio-qf-publication" in commands
     assert not {
